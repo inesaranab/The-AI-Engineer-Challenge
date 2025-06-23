@@ -1,0 +1,54 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    font-family: 'Inter', system-ui, sans-serif;
+  }
+  
+  body {
+    @apply bg-gradient-to-br from-dark-50 to-dark-100 min-h-screen;
+  }
+}
+
+@layer components {
+  .glass-effect {
+    @apply bg-white/80 backdrop-blur-sm border border-white/20;
+  }
+  
+  .gradient-text {
+    @apply bg-gradient-to-r from-primary-600 to-primary-800 bg-clip-text text-transparent;
+  }
+  
+  .chat-bubble {
+    @apply max-w-3xl mx-auto p-4 rounded-2xl shadow-lg;
+  }
+  
+  .user-bubble {
+    @apply bg-primary-500 text-white ml-auto;
+  }
+  
+  .ai-bubble {
+    @apply bg-white text-dark-800 mr-auto;
+  }
+  
+  .typing-indicator {
+    @apply flex space-x-1 p-4;
+  }
+  
+  .typing-dot {
+    @apply w-2 h-2 bg-primary-400 rounded-full animate-pulse;
+  }
+}
+
+@layer utilities {
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+} 
