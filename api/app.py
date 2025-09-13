@@ -76,7 +76,8 @@ async def chat(request: ChatRequest):
         
         if request.use_structured_output:
             # Use structured output with response_format for reliable parsing
-            response = client.chat.completions.create(
+            try:
+                response = client.chat.completions.create(
                 model=request.model,
                 messages=[
                     {"role": "system", "content": f"""You are a helpful AI assistant. Provide responses in the structured format requested.
@@ -112,21 +113,30 @@ Developer context: {request.developer_message}"""},
                     "json_schema": {
                         "name": "structured_response",
                         "schema": StructuredResponse.model_json_schema(),
-                        "strict": True
+                        "strict": False
                     }
                 }
             )
             
-            # Parse the structured response
-            structured_data = json.loads(response.choices[0].message.content)
-            parsed_response = StructuredResponse(**structured_data)
-            
-            # Return the markdown content with proper headers
-            return StreamingResponse(
-                iter([parsed_response.content]), 
-                media_type="text/markdown",
-                headers={"Content-Type": "text/markdown; charset=utf-8"}
-            )
+                # Parse the structured response
+                try:
+                    structured_data = json.loads(response.choices[0].message.content)
+                    parsed_response = StructuredResponse(**structured_data)
+                except json.JSONDecodeError as e:
+                    raise HTTPException(status_code=500, detail=f"Failed to parse JSON response: {str(e)}")
+                except Exception as e:
+                    raise HTTPException(status_code=500, detail=f"Failed to create structured response: {str(e)}")
+                
+                # Return the markdown content with proper headers
+                return StreamingResponse(
+                    iter([parsed_response.content]), 
+                    media_type="text/markdown",
+                    headers={"Content-Type": "text/markdown; charset=utf-8"}
+                )
+            except Exception as structured_error:
+                # Fallback to streaming if structured output fails
+                print(f"Structured output failed, falling back to streaming: {structured_error}")
+                # Continue to streaming fallback below
         else:
             # Fallback to streaming response (original behavior)
             async def generate():
@@ -189,6 +199,30 @@ Developer context: {request.developer_message}"""},
 @app.get("/api/health")
 async def health_check():
     return {"status": "ok"}
+
+# Define a simple test endpoint
+@app.post("/api/test")
+async def test_endpoint(request: dict):
+    """Simple test endpoint to verify API connectivity"""
+    try:
+        api_key = request.get("api_key", "")
+        if not api_key:
+            return {"error": "API key is required"}
+        
+        client = OpenAI(api_key=api_key)
+        response = client.chat.completions.create(
+            model="gpt-3.5-turbo",
+            messages=[{"role": "user", "content": "Say hello"}],
+            max_tokens=10
+        )
+        
+        return {
+            "status": "success",
+            "message": "API key is working",
+            "response": response.choices[0].message.content
+        }
+    except Exception as e:
+        return {"error": str(e)}
 
 # Define an API key validation endpoint
 @app.post("/api/validate-key")
@@ -283,14 +317,19 @@ Developer context: {request.developer_message}"""},
                 "json_schema": {
                     "name": "structured_response",
                     "schema": StructuredResponse.model_json_schema(),
-                    "strict": True
+                    "strict": False
                 }
             }
         )
         
         # Parse the structured response
-        structured_data = json.loads(response.choices[0].message.content)
-        parsed_response = StructuredResponse(**structured_data)
+        try:
+            structured_data = json.loads(response.choices[0].message.content)
+            parsed_response = StructuredResponse(**structured_data)
+        except json.JSONDecodeError as e:
+            raise HTTPException(status_code=500, detail=f"Failed to parse JSON response: {str(e)}")
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Failed to create structured response: {str(e)}")
         
         # Return both the structured data and markdown content
         return {
