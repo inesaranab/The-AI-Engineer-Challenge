@@ -29,7 +29,7 @@ class ChatRequest(BaseModel):
     developer_message: str  # Message from the developer/system
     user_message: str      # Message from the user
     model: Optional[str] = "gpt-4o-mini"  # Optional model selection with default
-    api_key: str          # OpenAI API key for authentication
+    api_key: str = Field(..., min_length=20, description="OpenAI API key for authentication")  # OpenAI API key for authentication
     use_structured_output: Optional[bool] = True  # Enable structured output parsing
 
 # Define structured output models for reliable parsing
@@ -64,6 +64,13 @@ class StructuredResponse(BaseModel):
 @app.post("/api/chat")
 async def chat(request: ChatRequest):
     try:
+        # Validate API key format
+        if not request.api_key.startswith('sk-'):
+            raise HTTPException(status_code=400, detail="Invalid API key format. OpenAI API keys should start with 'sk-'")
+        
+        if len(request.api_key) < 20:
+            raise HTTPException(status_code=400, detail="API key appears to be too short. Please check your OpenAI API key.")
+        
         # Initialize OpenAI client with the provided API key
         client = OpenAI(api_key=request.api_key)
         
@@ -162,20 +169,82 @@ Developer context: {request.developer_message}"""},
                 headers={"Content-Type": "text/markdown; charset=utf-8"}
             )
     
+    except HTTPException:
+        # Re-raise HTTP exceptions (like our API key validation)
+        raise
     except Exception as e:
-        # Handle any errors that occur during processing
-        raise HTTPException(status_code=500, detail=str(e))
+        # Handle OpenAI API errors specifically
+        error_message = str(e)
+        if "Invalid API key" in error_message or "Incorrect API key" in error_message:
+            raise HTTPException(status_code=401, detail="Invalid OpenAI API key. Please check your API key and try again.")
+        elif "Rate limit" in error_message:
+            raise HTTPException(status_code=429, detail="Rate limit exceeded. Please try again later.")
+        elif "Insufficient quota" in error_message:
+            raise HTTPException(status_code=402, detail="Insufficient API quota. Please check your OpenAI account billing.")
+        else:
+            # Handle any other errors that occur during processing
+            raise HTTPException(status_code=500, detail=f"An error occurred: {error_message}")
 
 # Define a health check endpoint to verify API status
 @app.get("/api/health")
 async def health_check():
     return {"status": "ok"}
 
+# Define an API key validation endpoint
+@app.post("/api/validate-key")
+async def validate_api_key(request: dict):
+    """Validate OpenAI API key format and basic connectivity"""
+    try:
+        api_key = request.get("api_key", "")
+        
+        if not api_key:
+            raise HTTPException(status_code=400, detail="API key is required")
+        
+        if not api_key.startswith('sk-'):
+            raise HTTPException(status_code=400, detail="Invalid API key format. OpenAI API keys should start with 'sk-'")
+        
+        if len(api_key) < 20:
+            raise HTTPException(status_code=400, detail="API key appears to be too short. Please check your OpenAI API key.")
+        
+        # Test the API key with a simple request
+        client = OpenAI(api_key=api_key)
+        response = client.chat.completions.create(
+            model="gpt-3.5-turbo",
+            messages=[{"role": "user", "content": "Hello"}],
+            max_tokens=5
+        )
+        
+        return {
+            "status": "valid",
+            "message": "API key is valid and working",
+            "model_tested": "gpt-3.5-turbo"
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        error_message = str(e)
+        if "Invalid API key" in error_message or "Incorrect API key" in error_message:
+            raise HTTPException(status_code=401, detail="Invalid OpenAI API key. Please check your API key and try again.")
+        elif "Rate limit" in error_message:
+            raise HTTPException(status_code=429, detail="Rate limit exceeded. Please try again later.")
+        elif "Insufficient quota" in error_message:
+            raise HTTPException(status_code=402, detail="Insufficient API quota. Please check your OpenAI account billing.")
+        else:
+            raise HTTPException(status_code=500, detail=f"API key validation failed: {error_message}")
+
 # Define an endpoint to get structured response data
 @app.post("/api/chat/structured")
 async def chat_structured(request: ChatRequest):
     """Endpoint that returns both markdown content and structured data"""
     try:
+        # Validate API key format
+        if not request.api_key.startswith('sk-'):
+            raise HTTPException(status_code=400, detail="Invalid API key format. OpenAI API keys should start with 'sk-'")
+        
+        if len(request.api_key) < 20:
+            raise HTTPException(status_code=400, detail="API key appears to be too short. Please check your OpenAI API key.")
+        
         client = OpenAI(api_key=request.api_key)
         
         response = client.chat.completions.create(
@@ -235,8 +304,21 @@ Developer context: {request.developer_message}"""},
             "task_type": parsed_response.task_type
         }
     
+    except HTTPException:
+        # Re-raise HTTP exceptions (like our API key validation)
+        raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        # Handle OpenAI API errors specifically
+        error_message = str(e)
+        if "Invalid API key" in error_message or "Incorrect API key" in error_message:
+            raise HTTPException(status_code=401, detail="Invalid OpenAI API key. Please check your API key and try again.")
+        elif "Rate limit" in error_message:
+            raise HTTPException(status_code=429, detail="Rate limit exceeded. Please try again later.")
+        elif "Insufficient quota" in error_message:
+            raise HTTPException(status_code=402, detail="Insufficient API quota. Please check your OpenAI account billing.")
+        else:
+            # Handle any other errors that occur during processing
+            raise HTTPException(status_code=500, detail=f"An error occurred: {error_message}")
 
 # Entry point for running the application directly
 if __name__ == "__main__":
