@@ -3,11 +3,12 @@ from fastapi import FastAPI, HTTPException
 from fastapi.responses import StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
 # Import Pydantic for data validation and settings management
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 # Import OpenAI client for interacting with OpenAI's API
 from openai import OpenAI
 import os
-from typing import Optional
+import json
+from typing import Optional, List, Dict, Any
 
 # Initialize FastAPI application with a title
 app = FastAPI(title="OpenAI Chat API")
@@ -27,8 +28,37 @@ app.add_middleware(
 class ChatRequest(BaseModel):
     developer_message: str  # Message from the developer/system
     user_message: str      # Message from the user
-    model: Optional[str] = "gpt-4.1-mini"  # Optional model selection with default
+    model: Optional[str] = "gpt-4o-mini"  # Optional model selection with default
     api_key: str          # OpenAI API key for authentication
+    use_structured_output: Optional[bool] = True  # Enable structured output parsing
+
+# Define structured output models for reliable parsing
+class CodeBlock(BaseModel):
+    language: str = Field(description="Programming language")
+    code: str = Field(description="The actual code content")
+
+class ListItem(BaseModel):
+    content: str = Field(description="List item content")
+    level: int = Field(default=0, description="Nesting level (0 for top-level)")
+
+class SummaryInfo(BaseModel):
+    """Structured summary information for better summarization tasks"""
+    main_topic: str = Field(description="The main topic or subject being discussed")
+    key_points: List[str] = Field(description="3-5 key points or takeaways")
+    conclusion: Optional[str] = Field(default=None, description="Main conclusion or final thought")
+    who_what_where_when_why: Optional[Dict[str, str]] = Field(
+        default=None, 
+        description="5W analysis: who, what, where, when, why (only if applicable)"
+    )
+
+class StructuredResponse(BaseModel):
+    content: str = Field(description="Main response content in markdown format")
+    code_blocks: List[CodeBlock] = Field(default=[], description="Extracted code blocks")
+    lists: List[ListItem] = Field(default=[], description="Extracted list items")
+    summary: Optional[str] = Field(default=None, description="Brief summary of the response")
+    structured_summary: Optional[SummaryInfo] = Field(default=None, description="Detailed structured summary for summarization tasks")
+    answer: Optional[str] = Field(default=None, description="Direct answer if applicable")
+    task_type: str = Field(default="general", description="Type of task: general, summarization, technical, creative, math, code")
 
 # Define the main chat endpoint that handles POST requests
 @app.post("/api/chat")
@@ -37,25 +67,100 @@ async def chat(request: ChatRequest):
         # Initialize OpenAI client with the provided API key
         client = OpenAI(api_key=request.api_key)
         
-        # Create an async generator function for streaming responses
-        async def generate():
-            # Create a streaming chat completion request
-            stream = client.chat.completions.create(
+        if request.use_structured_output:
+            # Use structured output with response_format for reliable parsing
+            response = client.chat.completions.create(
                 model=request.model,
                 messages=[
-                    {"role": "developer", "content": request.developer_message},
+                    {"role": "system", "content": f"""You are a helpful AI assistant. Provide responses in the structured format requested.
+
+## Task-Specific Instructions:
+
+### For Summarization Tasks:
+- Set task_type to "summarization"
+- Provide a structured_summary with:
+  - main_topic: The primary subject
+  - key_points: 3-5 essential takeaways
+  - conclusion: Main conclusion or final thought
+  - who_what_where_when_why: 5W analysis if applicable
+- Keep content concise (3-4 sentences max)
+- Focus on who/what/where/when/why without extra background
+
+### For Technical Tasks:
+- Set task_type to "technical"
+- Use 1 simple analogy + 1 concrete example
+- Define jargon in plain words
+- Extract code_blocks when applicable
+
+### For General Tasks:
+- Set task_type to "general"
+- Use clean markdown formatting
+- Provide direct answers when applicable
+
+Developer context: {request.developer_message}"""},
                     {"role": "user", "content": request.user_message}
                 ],
-                stream=True  # Enable streaming response
+                response_format={
+                    "type": "json_schema",
+                    "json_schema": {
+                        "name": "structured_response",
+                        "schema": StructuredResponse.model_json_schema(),
+                        "strict": True
+                    }
+                }
             )
             
-            # Yield each chunk of the response as it becomes available
-            for chunk in stream:
-                if chunk.choices[0].delta.content is not None:
-                    yield chunk.choices[0].delta.content
+            # Parse the structured response
+            structured_data = json.loads(response.choices[0].message.content)
+            parsed_response = StructuredResponse(**structured_data)
+            
+            # Return the markdown content with proper headers
+            return StreamingResponse(
+                iter([parsed_response.content]), 
+                media_type="text/markdown",
+                headers={"Content-Type": "text/markdown; charset=utf-8"}
+            )
+        else:
+            # Fallback to streaming response (original behavior)
+            async def generate():
+                stream = client.chat.completions.create(
+                    model=request.model,
+                    messages=[
+                        {"role": "system", "content": f"""You are a helpful AI assistant. Follow these formatting rules in ALL your responses:
 
-        # Return a streaming response to the client
-        return StreamingResponse(generate(), media_type="text/plain")
+## Output Style Rules:
+- Use clean **Markdown**: short paragraphs, headings when helpful, and tidy bullet/numbered lists
+- Default to **concise answers (≤ 4 sentences)** unless the user asks for more
+- Put the final result on its own line, prefixed with **Answer:** when relevant
+- **No LaTeX** in user-visible output; use plain-text math
+- Default language: **English** unless the user requests otherwise
+
+## Task-Specific Guidance:
+- **Technical explanations:** Use 1 simple analogy + 1 concrete example; define any jargon in plain words
+- **Summarization:** 3–4 sentences max covering **who/what/where/when/why**; avoid extra background; don't invent facts
+- **Creative writing:** Respect requested length; prefer readability over heavy adjectives; use clear paragraph breaks
+- **Math/logic:** Show minimal reasoning (one short step) and the final numeric answer; keep it tight
+- **Style rewriting (to professional/formal):** Preserve meaning, shorten sentences, remove slang/redundancy
+
+## Formatting for Code:
+- Use fenced code blocks with a language tag
+- Provide minimal, runnable snippets and brief comments; avoid unnecessary imports
+
+Developer context: {request.developer_message}"""},
+                        {"role": "user", "content": request.user_message}
+                    ],
+                    stream=True
+                )
+                
+                for chunk in stream:
+                    if chunk.choices[0].delta.content is not None:
+                        yield chunk.choices[0].delta.content
+
+            return StreamingResponse(
+                generate(), 
+                media_type="text/markdown",
+                headers={"Content-Type": "text/markdown; charset=utf-8"}
+            )
     
     except Exception as e:
         # Handle any errors that occur during processing
@@ -65,6 +170,73 @@ async def chat(request: ChatRequest):
 @app.get("/api/health")
 async def health_check():
     return {"status": "ok"}
+
+# Define an endpoint to get structured response data
+@app.post("/api/chat/structured")
+async def chat_structured(request: ChatRequest):
+    """Endpoint that returns both markdown content and structured data"""
+    try:
+        client = OpenAI(api_key=request.api_key)
+        
+        response = client.chat.completions.create(
+            model=request.model,
+            messages=[
+                {"role": "system", "content": f"""You are a helpful AI assistant. Provide responses in the structured format requested.
+
+## Task-Specific Instructions:
+
+### For Summarization Tasks:
+- Set task_type to "summarization"
+- Provide a structured_summary with:
+  - main_topic: The primary subject
+  - key_points: 3-5 essential takeaways
+  - conclusion: Main conclusion or final thought
+  - who_what_where_when_why: 5W analysis if applicable
+- Keep content concise (3-4 sentences max)
+- Focus on who/what/where/when/why without extra background
+
+### For Technical Tasks:
+- Set task_type to "technical"
+- Use 1 simple analogy + 1 concrete example
+- Define jargon in plain words
+- Extract code_blocks when applicable
+
+### For General Tasks:
+- Set task_type to "general"
+- Use clean markdown formatting
+- Provide direct answers when applicable
+
+Developer context: {request.developer_message}"""},
+                {"role": "user", "content": request.user_message}
+            ],
+            response_format={
+                "type": "json_schema",
+                "json_schema": {
+                    "name": "structured_response",
+                    "schema": StructuredResponse.model_json_schema(),
+                    "strict": True
+                }
+            }
+        )
+        
+        # Parse the structured response
+        structured_data = json.loads(response.choices[0].message.content)
+        parsed_response = StructuredResponse(**structured_data)
+        
+        # Return both the structured data and markdown content
+        return {
+            "content": parsed_response.content,
+            "structured_data": parsed_response.model_dump(),
+            "code_blocks": [block.model_dump() for block in parsed_response.code_blocks],
+            "lists": [item.model_dump() for item in parsed_response.lists],
+            "summary": parsed_response.summary,
+            "structured_summary": parsed_response.structured_summary.model_dump() if parsed_response.structured_summary else None,
+            "answer": parsed_response.answer,
+            "task_type": parsed_response.task_type
+        }
+    
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 # Entry point for running the application directly
 if __name__ == "__main__":
