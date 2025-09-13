@@ -74,8 +74,8 @@ async def chat(request: ChatRequest):
         # Initialize OpenAI client with the provided API key
         client = OpenAI(api_key=request.api_key)
         
-        if request.use_structured_output:
-            # Use structured output with response_format for reliable parsing
+        if request.use_structured_output and request.model in ["gpt-4o", "gpt-4o-mini", "gpt-4-turbo"]:
+            # Use structured output with response_format for compatible models only
             try:
                 response = client.chat.completions.create(
                 model=request.model,
@@ -137,13 +137,13 @@ Developer context: {request.developer_message}"""},
                 # Fallback to streaming if structured output fails
                 print(f"Structured output failed, falling back to streaming: {structured_error}")
                 # Continue to streaming fallback below
-        else:
-            # Fallback to streaming response (original behavior)
-            async def generate():
-                stream = client.chat.completions.create(
-                    model=request.model,
-                    messages=[
-                        {"role": "system", "content": f"""You are a helpful AI assistant. Follow these formatting rules in ALL your responses:
+        
+        # Fallback to streaming response (for incompatible models or when structured output fails)
+        async def generate():
+            stream = client.chat.completions.create(
+                model=request.model,
+                messages=[
+                    {"role": "system", "content": f"""You are a helpful AI assistant. Follow these formatting rules in ALL your responses:
 
 ## Output Style Rules:
 - Use clean **Markdown**: short paragraphs, headings when helpful, and tidy bullet/numbered lists
@@ -164,20 +164,20 @@ Developer context: {request.developer_message}"""},
 - Provide minimal, runnable snippets and brief comments; avoid unnecessary imports
 
 Developer context: {request.developer_message}"""},
-                        {"role": "user", "content": request.user_message}
-                    ],
-                    stream=True
-                )
-                
-                for chunk in stream:
-                    if chunk.choices[0].delta.content is not None:
-                        yield chunk.choices[0].delta.content
-
-            return StreamingResponse(
-                generate(), 
-                media_type="text/markdown",
-                headers={"Content-Type": "text/markdown; charset=utf-8"}
+                    {"role": "user", "content": request.user_message}
+                ],
+                stream=True
             )
+            
+            for chunk in stream:
+                if chunk.choices[0].delta.content is not None:
+                    yield chunk.choices[0].delta.content
+
+        return StreamingResponse(
+            generate(), 
+            media_type="text/markdown",
+            headers={"Content-Type": "text/markdown; charset=utf-8"}
+        )
     
     except HTTPException:
         # Re-raise HTTP exceptions (like our API key validation)
@@ -280,6 +280,10 @@ async def chat_structured(request: ChatRequest):
             raise HTTPException(status_code=400, detail="API key appears to be too short. Please check your OpenAI API key.")
         
         client = OpenAI(api_key=request.api_key)
+        
+        # Check if model supports structured output
+        if request.model not in ["gpt-4o", "gpt-4o-mini", "gpt-4-turbo"]:
+            raise HTTPException(status_code=400, detail=f"Model {request.model} does not support structured output. Please use gpt-4o, gpt-4o-mini, or gpt-4-turbo.")
         
         response = client.chat.completions.create(
             model=request.model,
