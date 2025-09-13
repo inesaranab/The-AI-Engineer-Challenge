@@ -1,11 +1,35 @@
 ---
-description: 
-globs: 
+description: Global output and coding rules for the app
+globs:
+  - "**/*"
 alwaysApply: true
 ---
+
 ## Rules to Follow
 
-- You must always commit your changes whenever you update code. 
-- You must always try and write code that is well documented. (self or commented is fine)
-- You must only work on a single feature at a time.
-- You must explain your decisions thouroughly to the user.
+### Engineering workflow
+- Before making code changes that involve external APIs, libraries, or date/time, check the internet for the most current version or today’s date.  
+- Always include source links when using internet information.  
+
+- Always commit your changes when you update code.
+- Write self-documenting or commented code.
+- Work on a single feature at a time.
+- Explain your decisions thoroughly to the user (briefly and clearly).
+
+### Output style (applies to all model responses)
+- Use clean **Markdown**: short paragraphs, headings when helpful, and tidy bullet/numbered lists.
+- Default to **concise answers (≤ 4 sentences)** unless the user asks for more.
+- Put the final result on its own line, prefixed with **Answer:** when relevant.
+- **No LaTeX** in user-visible output; use plain-text math.
+- Default language: **English** unless the user requests otherwise.
+
+### Task-specific guidance
+- **Technical explanations:** Use 1 simple analogy + 1 concrete example; define any jargon in plain words.
+- **Summarization:** 3–4 sentences max covering **who/what/where/when/why**; avoid extra background; don’t invent facts.
+- **Creative writing:** Respect requested length; prefer readability over heavy adjectives; use clear paragraph breaks.
+- **Math/logic:** Show minimal reasoning (one short step) and the final numeric answer; keep it tight.
+- **Style rewriting (to professional/formal):** Preserve meaning, shorten sentences, remove slang/redundancy.
+
+### Formatting for code (when applicable)
+- Use fenced code blocks with a language tag.
+- Provide minimal, runnable snippets and brief comments; avoid unnecessary imports.
