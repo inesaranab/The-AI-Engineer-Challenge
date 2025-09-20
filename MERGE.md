@@ -6,11 +6,10 @@ This document provides instructions for merging the PDF RAG functionality back t
 
 ### Backend (API)
 - Added PDF upload endpoint (`/api/upload-pdf`)
-- Integrated aimakerspace library for RAG functionality
-- Updated chat endpoint to use RAG context when PDF is uploaded
 - Added PDF text extraction using PyPDF2
-- Added vector database for semantic search
-- Updated dependencies in `requirements.txt`
+- Implemented simple RAG system with keyword-based search
+- Updated chat endpoint to use RAG context when PDF is uploaded
+- Added PyPDF2 dependency to requirements.txt
 
 ### Frontend
 - Added PDF upload UI in settings panel
@@ -21,18 +20,6 @@ This document provides instructions for merging the PDF RAG functionality back t
 
 ### Dependencies Added
 - PyPDF2==3.0.1 (PDF text extraction)
-- numpy==1.21.6 (Vector operations - Vercel compatible)
-- python-dotenv==1.0.0 (Environment variables)
-
-## 🚨 Vercel Deployment Fix
-
-**IMPORTANT**: The `vercel.json` has been optimized for Vercel's Python runtime with proper configuration for numpy and aimakerspace.
-
-### Key Changes for Vercel Compatibility:
-1. **Updated `vercel.json`**: Added maxLambdaSize and maxDuration configurations
-2. **Optimized numpy version**: Using numpy==1.21.6 (compatible with Vercel)
-3. **Added `.vercelignore`**: Excludes unnecessary files from deployment
-4. **Kept aimakerspace**: Full RAG functionality preserved
 
 ## Deployment Instructions
 
@@ -71,7 +58,7 @@ This document provides instructions for merging the PDF RAG functionality back t
 2. **Create and merge PR using GitHub CLI:**
    ```bash
    # Create pull request
-   gh pr create --title "Add PDF Upload and RAG Chat Functionality" --body "Implements PDF upload and RAG-based chat using aimakerspace library"
+   gh pr create --title "Add PDF Upload and RAG Chat Functionality" --body "Implements PDF upload and RAG-based chat using simple keyword matching"
    
    # Merge the pull request
    gh pr merge --squash
@@ -116,32 +103,11 @@ After deployment, test the following features:
 The-AI-Engineer-Challenge/
 ├── api/
 │   ├── app.py (updated with RAG functionality)
-│   └── requirements.txt (updated dependencies)
+│   └── requirements.txt (added PyPDF2)
 ├── frontend/
 │   └── app/page.tsx (updated with PDF upload UI)
-├── aimakerspace/ (new - copied from AIE2)
-│   ├── __init__.py
-│   ├── text_utils.py
-│   ├── vectordatabase.py
-│   └── openai_utils/
-└── vercel.json (unchanged)
+└── vercel.json (unchanged - original configuration)
 ```
-
-## Rollback Instructions
-
-If issues occur after deployment:
-
-1. **Revert to previous commit:**
-   ```bash
-   git revert <commit-hash>
-   git push origin main
-   ```
-
-2. **Or switch back to main branch:**
-   ```bash
-   git checkout main
-   git push origin main --force
-   ```
 
 ## Local Development
 
@@ -160,8 +126,7 @@ npm run dev
 
 ## Notes
 
-- The aimakerspace library is included in the repository for simplicity
+- Uses simple keyword-based RAG instead of vector embeddings for Vercel compatibility
 - PDF processing happens server-side for security
-- Vector database is stored in memory (resets on server restart)
-- For production, consider using a persistent vector database like Pinecone or Weaviate
-- **Frontend and Backend are now completely separate** - this is a cleaner architecture
+- RAG system uses in-memory storage (resets on server restart)
+- **Frontend and Backend deploy together on Vercel** - this is the original working configuration

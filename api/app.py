@@ -9,17 +9,13 @@ from openai import OpenAI
 import os
 import PyPDF2
 import io
-import asyncio
 from typing import Optional
-from aimakerspace.vectordatabase import VectorDatabase
-from aimakerspace.text_utils import CharacterTextSplitter
-from aimakerspace.openai_utils.embedding import EmbeddingModel
 
 # Initialize FastAPI application with a title
 app = FastAPI(title="OpenAI Chat API")
 
 # Global variables for RAG system
-vector_db = None
+pdf_chunks = []
 pdf_text = ""
 
 # Configure CORS (Cross-Origin Resource Sharing) middleware
@@ -55,31 +51,39 @@ def extract_text_from_pdf(pdf_file: bytes) -> str:
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Error extracting text from PDF: {str(e)}")
 
-async def build_rag_system(text: str, api_key: str) -> VectorDatabase:
-    """Build RAG system from PDF text using aimakerspace"""
+def build_rag_system(text: str) -> list:
+    """Build simple RAG system from PDF text"""
     try:
-        # Set the API key for the embedding model
-        os.environ["OPENAI_API_KEY"] = api_key
+        # Simple text chunking
+        chunk_size = 1000
+        chunks = []
         
-        # Split text into chunks
-        splitter = CharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
-        chunks = splitter.split(text)
+        for i in range(0, len(text), chunk_size):
+            chunk = text[i:i + chunk_size]
+            chunks.append(chunk)
         
-        # Create vector database
-        embedding_model = EmbeddingModel()
-        vector_db = VectorDatabase(embedding_model)
-        
-        # Build embeddings for chunks
-        await vector_db.abuild_from_list(chunks)
-        
-        return vector_db
+        return chunks
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error building RAG system: {str(e)}")
+
+def find_relevant_chunks(query: str, chunks: list, k: int = 3) -> list:
+    """Simple keyword-based search for relevant chunks"""
+    query_words = query.lower().split()
+    chunk_scores = []
+    
+    for i, chunk in enumerate(chunks):
+        chunk_lower = chunk.lower()
+        score = sum(1 for word in query_words if word in chunk_lower)
+        chunk_scores.append((i, score, chunk))
+    
+    # Sort by score and return top k
+    chunk_scores.sort(key=lambda x: x[1], reverse=True)
+    return [chunk for _, _, chunk in chunk_scores[:k]]
 
 # PDF Upload endpoint
 @app.post("/api/upload-pdf", response_model=UploadResponse)
 async def upload_pdf(file: UploadFile = File(...), api_key: str = ""):
-    global vector_db, pdf_text
+    global pdf_chunks, pdf_text
     
     if not api_key:
         raise HTTPException(status_code=400, detail="API key is required")
@@ -97,11 +101,11 @@ async def upload_pdf(file: UploadFile = File(...), api_key: str = ""):
         if not pdf_text.strip():
             raise HTTPException(status_code=400, detail="No text found in PDF")
         
-        # Build RAG system using aimakerspace
-        vector_db = await build_rag_system(pdf_text, api_key)
+        # Build simple RAG system
+        pdf_chunks = build_rag_system(pdf_text)
         
         return UploadResponse(
-            message=f"PDF uploaded successfully! Extracted {len(pdf_text)} characters and built vector database.",
+            message=f"PDF uploaded successfully! Extracted {len(pdf_text)} characters and created {len(pdf_chunks)} chunks.",
             success=True
         )
     
@@ -111,7 +115,7 @@ async def upload_pdf(file: UploadFile = File(...), api_key: str = ""):
 # Define the main chat endpoint that handles POST requests
 @app.post("/api/chat")
 async def chat(request: ChatRequest):
-    global vector_db
+    global pdf_chunks
     
     try:
         # Initialize OpenAI client with the provided API key
@@ -119,10 +123,10 @@ async def chat(request: ChatRequest):
         
         # Create an async generator function for streaming responses
         async def generate():
-            # If we have a vector database (PDF uploaded), use RAG
-            if vector_db is not None:
-                # Search for relevant context using aimakerspace
-                relevant_chunks = vector_db.search_by_text(request.user_message, k=3, return_as_text=True)
+            # If we have PDF chunks (PDF uploaded), use RAG
+            if pdf_chunks:
+                # Search for relevant context using simple keyword matching
+                relevant_chunks = find_relevant_chunks(request.user_message, pdf_chunks, k=3)
                 context = "\n\n".join(relevant_chunks)
                 
                 # Create enhanced system message with context
