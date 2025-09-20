@@ -9,7 +9,7 @@ from openai import OpenAI
 import os
 import PyPDF2
 import io
-from typing import Optional
+from typing import Optional, List
 
 # Initialize FastAPI application with a title
 app = FastAPI(title="OpenAI Chat API")
@@ -37,6 +37,14 @@ class ChatRequest(BaseModel):
 
 class UploadResponse(BaseModel):
     message: str
+    success: bool
+
+class Flashcard(BaseModel):
+    question: str
+    answer: str
+
+class FlashcardResponse(BaseModel):
+    flashcards: List[Flashcard]
     success: bool
 
 def extract_text_from_pdf(pdf_file: bytes) -> str:
@@ -183,6 +191,106 @@ Context from uploaded document:
 @app.get("/api/health")
 async def health_check():
     return {"status": "ok"}
+
+# Flashcard generation endpoint
+@app.post("/api/flashcards", response_model=FlashcardResponse)
+async def generate_flashcards(authorization: str = Header(None)):
+    global pdf_text, pdf_chunks
+    
+    # Extract API key from Authorization header
+    api_key = None
+    if authorization and authorization.startswith('Bearer '):
+        api_key = authorization[7:]  # Remove 'Bearer ' prefix
+    
+    if not api_key:
+        raise HTTPException(status_code=400, detail="API key is required")
+    
+    if not pdf_text or not pdf_text.strip():
+        raise HTTPException(status_code=400, detail="No PDF has been uploaded yet. Please upload a PDF first.")
+    
+    try:
+        # Initialize OpenAI client
+        client = OpenAI(api_key=api_key)
+        
+        # Create a prompt for flashcard generation
+        flashcard_prompt = f"""Based on the following document content, generate 8-10 educational flashcards in Q&A format. Each flashcard should have a clear, specific question and a comprehensive answer.
+
+Document content:
+{pdf_text[:4000]}  # Limit to first 4000 characters to avoid token limits
+
+Generate flashcards that:
+1. Cover the main topics and concepts from the document
+2. Have clear, specific questions
+3. Provide detailed, accurate answers
+4. Are educational and useful for studying
+
+Return the flashcards in this exact JSON format:
+[
+  {{"question": "What is...?", "answer": "The answer is..."}},
+  {{"question": "How does...?", "answer": "The process involves..."}}
+]
+
+Only return the JSON array, no other text."""
+
+        # Generate flashcards using OpenAI
+        response = client.chat.completions.create(
+            model="gpt-4.1-mini",
+            messages=[
+                {"role": "system", "content": "You are an educational assistant that creates high-quality flashcards from document content. Always respond with valid JSON only."},
+                {"role": "user", "content": flashcard_prompt}
+            ],
+            temperature=0.7,
+            max_tokens=2000
+        )
+        
+        # Parse the response
+        flashcard_text = response.choices[0].message.content.strip()
+        
+        # Clean up the response (remove any markdown formatting)
+        if flashcard_text.startswith("```json"):
+            flashcard_text = flashcard_text[7:]
+        if flashcard_text.endswith("```"):
+            flashcard_text = flashcard_text[:-3]
+        
+        # Parse JSON
+        import json
+        try:
+            flashcard_data = json.loads(flashcard_text)
+            
+            # Validate and format the flashcards
+            flashcards = []
+            for item in flashcard_data:
+                if isinstance(item, dict) and "question" in item and "answer" in item:
+                    flashcards.append(Flashcard(
+                        question=item["question"].strip(),
+                        answer=item["answer"].strip()
+                    ))
+            
+            if len(flashcards) < 3:
+                raise ValueError("Not enough valid flashcards generated")
+            
+            return FlashcardResponse(
+                flashcards=flashcards,
+                success=True
+            )
+            
+        except (json.JSONDecodeError, ValueError) as e:
+            # Fallback: create simple flashcards from document chunks
+            flashcards = []
+            for i, chunk in enumerate(pdf_chunks[:8]):
+                if len(chunk.strip()) > 50:  # Only use substantial chunks
+                    flashcards.append(Flashcard(
+                        question=f"What is mentioned about: {chunk[:100]}...?",
+                        answer=chunk[:300] + "..." if len(chunk) > 300 else chunk
+                    ))
+            
+            return FlashcardResponse(
+                flashcards=flashcards,
+                success=True
+            )
+    
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error generating flashcards: {str(e)}")
 
 # Entry point for running the application directly
 if __name__ == "__main__":

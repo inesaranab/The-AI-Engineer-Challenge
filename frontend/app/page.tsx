@@ -10,6 +10,38 @@ interface Message {
   timestamp: Date
 }
 
+interface Flashcard {
+  question: string
+  answer: string
+}
+
+// Flashcard Component
+const FlashcardComponent: React.FC<{ card: Flashcard }> = ({ card }) => {
+  const [isFlipped, setIsFlipped] = useState(false)
+
+  return (
+    <div 
+      className="bg-white/50 backdrop-blur-sm border border-white/30 rounded-xl p-4 cursor-pointer hover:bg-white/60 transition-all duration-300 min-h-[120px] flex items-center justify-center"
+      onClick={() => setIsFlipped(!isFlipped)}
+    >
+      <div className="text-center">
+        {isFlipped ? (
+          <div>
+            <p className="text-sm font-medium text-dark-600 mb-2">Answer:</p>
+            <p className="text-dark-800">{card.answer}</p>
+          </div>
+        ) : (
+          <div>
+            <p className="text-sm font-medium text-dark-600 mb-2">Question:</p>
+            <p className="text-dark-800">{card.question}</p>
+          </div>
+        )}
+        <p className="text-xs text-dark-500 mt-2">Click to {isFlipped ? 'see question' : 'see answer'}</p>
+      </div>
+    </div>
+  )
+}
+
 // Get API URL from environment or default to localhost
 const getApiUrl = () => {
   if (typeof window !== 'undefined') {
@@ -31,6 +63,9 @@ export default function Home() {
   const [uploadedFile, setUploadedFile] = useState<File | null>(null)
   const [isUploading, setIsUploading] = useState(false)
   const [uploadStatus, setUploadStatus] = useState<string>('')
+  const [flashcards, setFlashcards] = useState<Flashcard[]>([])
+  const [isGeneratingFlashcards, setIsGeneratingFlashcards] = useState(false)
+  const [showFlashcards, setShowFlashcards] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -77,6 +112,9 @@ export default function Home() {
       const result = await response.json()
       setUploadedFile(file)
       setUploadStatus(result.message)
+      // Clear previous flashcards when new PDF is uploaded
+      setFlashcards([])
+      setShowFlashcards(false)
     } catch (error) {
       console.error('Upload error:', error)
       setUploadStatus(`Upload failed: ${error instanceof Error ? error.message : 'Unknown error'}`)
@@ -95,8 +133,43 @@ export default function Home() {
   const removeUploadedFile = () => {
     setUploadedFile(null)
     setUploadStatus('')
+    setFlashcards([])
+    setShowFlashcards(false)
     if (fileInputRef.current) {
       fileInputRef.current.value = ''
+    }
+  }
+
+  const generateFlashcards = async () => {
+    if (!apiKey.trim()) {
+      alert('Please set your API key first')
+      return
+    }
+
+    setIsGeneratingFlashcards(true)
+    try {
+      const apiUrl = getApiUrl()
+      const response = await fetch(`${apiUrl}/flashcards`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${apiKey}`,
+          'Content-Type': 'application/json',
+        },
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.detail || 'Failed to generate flashcards')
+      }
+
+      const result = await response.json()
+      setFlashcards(result.flashcards)
+      setShowFlashcards(true)
+    } catch (error) {
+      console.error('Flashcard generation error:', error)
+      alert(`Error generating flashcards: ${error instanceof Error ? error.message : 'Unknown error'}`)
+    } finally {
+      setIsGeneratingFlashcards(false)
     }
   }
 
@@ -305,6 +378,25 @@ export default function Home() {
                   {uploadStatus}
                 </div>
               )}
+
+              {uploadedFile && uploadStatus.includes('successfully') && (
+                <div className="mt-3">
+                  <button
+                    onClick={generateFlashcards}
+                    disabled={isGeneratingFlashcards || !apiKey.trim()}
+                    className="flex items-center space-x-2 px-4 py-2 bg-purple-100 text-purple-800 rounded-lg hover:bg-purple-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  >
+                    {isGeneratingFlashcards ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <Sparkles className="w-4 h-4" />
+                    )}
+                    <span className="text-sm font-medium">
+                      {isGeneratingFlashcards ? 'Generating...' : 'Generate Flashcards'}
+                    </span>
+                  </button>
+                </div>
+              )}
               
               {isUploading && (
                 <div className="flex items-center space-x-2 mt-2">
@@ -393,6 +485,28 @@ export default function Home() {
           <div ref={messagesEndRef} />
         </div>
       </div>
+
+      {/* Flashcards Section */}
+      {showFlashcards && flashcards.length > 0 && (
+        <div className="glass-effect border-t border-white/20 p-4">
+          <div className="max-w-6xl mx-auto">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-dark-800">📚 Study Flashcards</h3>
+              <button
+                onClick={() => setShowFlashcards(false)}
+                className="text-dark-500 hover:text-dark-700"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {flashcards.map((card, index) => (
+                <FlashcardComponent key={index} card={card} />
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Input Form */}
       <div className="glass-effect border-t border-white/20 p-4">
