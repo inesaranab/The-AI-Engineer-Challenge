@@ -168,3 +168,6 @@ cython_debug/
 node_modules
 .next
 
+# PDF filess
+*.pdf
+

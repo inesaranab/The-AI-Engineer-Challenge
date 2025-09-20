@@ -59,11 +59,13 @@ export default function Home() {
     try {
       const formData = new FormData()
       formData.append('file', file)
-      formData.append('api_key', apiKey)
 
       const apiUrl = getApiUrl()
       const response = await fetch(`${apiUrl}/upload-pdf`, {
         method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${apiKey}`,
+        },
         body: formData,
       })
 
@@ -119,12 +121,12 @@ export default function Home() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${apiKey}`,
         },
         body: JSON.stringify({
           developer_message: developerMessage,
           user_message: inputMessage,
           model: model,
-          api_key: apiKey
         }),
       })
 

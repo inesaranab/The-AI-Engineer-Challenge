@@ -1,5 +1,5 @@
 # Import required FastAPI components for building the API
-from fastapi import FastAPI, HTTPException, UploadFile, File
+from fastapi import FastAPI, HTTPException, UploadFile, File, Header
 from fastapi.responses import StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
 # Import Pydantic for data validation and settings management
@@ -34,7 +34,6 @@ class ChatRequest(BaseModel):
     developer_message: str  # Message from the developer/system
     user_message: str      # Message from the user
     model: Optional[str] = "gpt-4.1-mini"  # Optional model selection with default
-    api_key: str          # OpenAI API key for authentication
 
 class UploadResponse(BaseModel):
     message: str
@@ -82,8 +81,13 @@ def find_relevant_chunks(query: str, chunks: list, k: int = 3) -> list:
 
 # PDF Upload endpoint
 @app.post("/api/upload-pdf", response_model=UploadResponse)
-async def upload_pdf(file: UploadFile = File(...), api_key: str = ""):
+async def upload_pdf(file: UploadFile = File(...), authorization: str = Header(None)):
     global pdf_chunks, pdf_text
+    
+    # Extract API key from Authorization header
+    api_key = None
+    if authorization and authorization.startswith('Bearer '):
+        api_key = authorization[7:]  # Remove 'Bearer ' prefix
     
     if not api_key:
         raise HTTPException(status_code=400, detail="API key is required")
@@ -114,12 +118,20 @@ async def upload_pdf(file: UploadFile = File(...), api_key: str = ""):
 
 # Define the main chat endpoint that handles POST requests
 @app.post("/api/chat")
-async def chat(request: ChatRequest):
+async def chat(request: ChatRequest, authorization: str = Header(None)):
     global pdf_chunks
+    
+    # Extract API key from Authorization header
+    api_key = None
+    if authorization and authorization.startswith('Bearer '):
+        api_key = authorization[7:]  # Remove 'Bearer ' prefix
+    
+    if not api_key:
+        raise HTTPException(status_code=400, detail="API key is required")
     
     try:
         # Initialize OpenAI client with the provided API key
-        client = OpenAI(api_key=request.api_key)
+        client = OpenAI(api_key=api_key)
         
         # Create an async generator function for streaming responses
         async def generate():
