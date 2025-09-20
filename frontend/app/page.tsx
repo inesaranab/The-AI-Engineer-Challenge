@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useRef, useEffect } from 'react'
-import { Send, Bot, User, Settings, Sparkles, Loader2 } from 'lucide-react'
+import { Send, Bot, User, Settings, Sparkles, Loader2, Upload, FileText, X } from 'lucide-react'
 
 interface Message {
   id: string
@@ -28,7 +28,11 @@ export default function Home() {
   const [developerMessage, setDeveloperMessage] = useState('You are a helpful AI assistant.')
   const [model, setModel] = useState('gpt-4.1-mini')
   const [showSettings, setShowSettings] = useState(false)
+  const [uploadedFile, setUploadedFile] = useState<File | null>(null)
+  const [isUploading, setIsUploading] = useState(false)
+  const [uploadStatus, setUploadStatus] = useState<string>('')
   const messagesEndRef = useRef<HTMLDivElement>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -37,6 +41,62 @@ export default function Home() {
   useEffect(() => {
     scrollToBottom()
   }, [messages])
+
+  const handleFileUpload = async (file: File) => {
+    if (!file.name.endsWith('.pdf')) {
+      setUploadStatus('Please select a PDF file')
+      return
+    }
+
+    if (!apiKey.trim()) {
+      setUploadStatus('Please set your API key first')
+      return
+    }
+
+    setIsUploading(true)
+    setUploadStatus('Uploading and processing PDF...')
+
+    try {
+      const formData = new FormData()
+      formData.append('file', file)
+      formData.append('api_key', apiKey)
+
+      const apiUrl = getApiUrl()
+      const response = await fetch(`${apiUrl}/upload-pdf`, {
+        method: 'POST',
+        body: formData,
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.detail || 'Upload failed')
+      }
+
+      const result = await response.json()
+      setUploadedFile(file)
+      setUploadStatus(result.message)
+    } catch (error) {
+      console.error('Upload error:', error)
+      setUploadStatus(`Upload failed: ${error instanceof Error ? error.message : 'Unknown error'}`)
+    } finally {
+      setIsUploading(false)
+    }
+  }
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      handleFileUpload(file)
+    }
+  }
+
+  const removeUploadedFile = () => {
+    setUploadedFile(null)
+    setUploadStatus('')
+    if (fileInputRef.current) {
+      fileInputRef.current.value = ''
+    }
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -179,6 +239,78 @@ export default function Home() {
                 <option value="gpt-3.5-turbo">GPT-3.5 Turbo</option>
               </select>
             </div>
+            
+            {/* PDF Upload Section */}
+            <div className="border-t border-dark-200 pt-4">
+              <label className="block text-sm font-medium text-dark-700 mb-2">
+                Upload PDF for RAG Chat
+              </label>
+              
+              {!uploadedFile ? (
+                <div className="space-y-3">
+                  <div
+                    className="border-2 border-dashed border-dark-300 rounded-lg p-6 text-center hover:border-primary-400 transition-colors cursor-pointer"
+                    onClick={() => fileInputRef.current?.click()}
+                  >
+                    <Upload className="w-8 h-8 text-dark-400 mx-auto mb-2" />
+                    <p className="text-sm text-dark-600">
+                      Click to upload a PDF file
+                    </p>
+                    <p className="text-xs text-dark-500 mt-1">
+                      The AI will only answer questions using information from this document
+                    </p>
+                  </div>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept=".pdf"
+                    onChange={handleFileSelect}
+                    className="hidden"
+                  />
+                </div>
+              ) : (
+                <div className="bg-primary-50 border border-primary-200 rounded-lg p-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-3">
+                      <FileText className="w-5 h-5 text-primary-600" />
+                      <div>
+                        <p className="text-sm font-medium text-primary-800">
+                          {uploadedFile.name}
+                        </p>
+                        <p className="text-xs text-primary-600">
+                          Ready for RAG chat
+                        </p>
+                      </div>
+                    </div>
+                    <button
+                      onClick={removeUploadedFile}
+                      className="p-1 hover:bg-primary-100 rounded transition-colors"
+                    >
+                      <X className="w-4 h-4 text-primary-600" />
+                    </button>
+                  </div>
+                </div>
+              )}
+              
+              {uploadStatus && (
+                <div className={`mt-2 text-sm ${
+                  uploadStatus.includes('successfully') 
+                    ? 'text-green-600' 
+                    : uploadStatus.includes('failed') || uploadStatus.includes('Please')
+                    ? 'text-red-600'
+                    : 'text-blue-600'
+                }`}>
+                  {uploadStatus}
+                </div>
+              )}
+              
+              {isUploading && (
+                <div className="flex items-center space-x-2 mt-2">
+                  <Loader2 className="w-4 h-4 animate-spin text-blue-600" />
+                  <span className="text-sm text-blue-600">Processing PDF...</span>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       )}
@@ -195,7 +327,7 @@ export default function Home() {
                 Welcome to Your AI Chat!
               </h3>
               <p className="text-dark-600 max-w-md mx-auto">
-                Start a conversation with your AI assistant. Make sure to set up your API key in the settings above.
+                Start a conversation with your AI assistant. Upload a PDF to chat with your documents using RAG, or chat normally. Make sure to set up your API key in the settings above.
               </p>
             </div>
           )}
