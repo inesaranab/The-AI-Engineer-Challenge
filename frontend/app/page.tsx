@@ -16,13 +16,25 @@ interface Flashcard {
 }
 
 // Flashcard Component
-const FlashcardComponent: React.FC<{ card: Flashcard }> = ({ card }) => {
+const FlashcardComponent: React.FC<{ 
+  card: Flashcard, 
+  onViewFull: (card: Flashcard) => void 
+}> = ({ card, onViewFull }) => {
   const [isFlipped, setIsFlipped] = useState(false)
+
+  const handleCardClick = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    setIsFlipped(!isFlipped)
+  }
+
+  const handleViewFullClick = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    onViewFull(card)
+  }
 
   return (
     <div 
-      className="relative w-80 h-48 sm:w-full cursor-pointer perspective-1000 flashcard-container transition-all duration-300"
-      onClick={() => setIsFlipped(!isFlipped)}
+      className="relative w-80 h-48 sm:w-full perspective-1000 flashcard-container transition-all duration-300"
     >
       <div 
         className={`relative w-full h-full transition-transform duration-700 transform-style-preserve-3d ${
@@ -36,8 +48,9 @@ const FlashcardComponent: React.FC<{ card: Flashcard }> = ({ card }) => {
       >
         {/* Front of card (Question) */}
         <div 
-          className="absolute w-full h-full bg-gray-900 border border-gray-700 rounded-lg shadow-md font-mono backface-hidden"
+          className="absolute w-full h-full bg-gray-900 border border-gray-700 rounded-lg shadow-md font-mono backface-hidden cursor-pointer"
           style={{ backfaceVisibility: 'hidden' }}
+          onClick={handleCardClick}
         >
           <div className="flex flex-col items-center justify-center text-center h-full p-4">
             <div className="text-green-400 font-bold mb-3 text-sm">Q:</div>
@@ -50,7 +63,7 @@ const FlashcardComponent: React.FC<{ card: Flashcard }> = ({ card }) => {
           </div>
         </div>
 
-        {/* Back of card (Answer) */}
+        {/* Back of card (Answer Preview) */}
         <div 
           className="absolute w-full h-full bg-gray-900 border border-gray-700 rounded-lg shadow-md font-mono backface-hidden rotate-y-180"
           style={{ 
@@ -60,10 +73,16 @@ const FlashcardComponent: React.FC<{ card: Flashcard }> = ({ card }) => {
         >
           <div className="flex flex-col items-center justify-center text-center h-full p-4">
             <div className="text-blue-400 font-bold mb-3 text-sm">A:</div>
-            <div className="text-gray-100 text-sm leading-relaxed overflow-auto flex-1 flex items-center justify-center max-h-24">
-              <span className="line-clamp-6">{card.answer}</span>
+            <div className="text-gray-100 text-sm leading-relaxed overflow-auto flex-1 flex items-center justify-center max-h-16">
+              <span className="line-clamp-4">{card.answer}</span>
             </div>
-            <div className="text-gray-500 text-xs mt-2">
+            <button
+              onClick={handleViewFullClick}
+              className="mt-2 px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white text-xs rounded transition-colors"
+            >
+              View Full Answer
+            </button>
+            <div className="text-gray-500 text-xs mt-1">
               Click to see question
             </div>
           </div>
@@ -97,6 +116,8 @@ export default function Home() {
   const [flashcards, setFlashcards] = useState<Flashcard[]>([])
   const [isGeneratingFlashcards, setIsGeneratingFlashcards] = useState(false)
   const [showFlashcards, setShowFlashcards] = useState(false)
+  const [selectedFlashcard, setSelectedFlashcard] = useState<Flashcard | null>(null)
+  const [showModal, setShowModal] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -202,6 +223,16 @@ export default function Home() {
     } finally {
       setIsGeneratingFlashcards(false)
     }
+  }
+
+  const handleViewFull = (card: Flashcard) => {
+    setSelectedFlashcard(card)
+    setShowModal(true)
+  }
+
+  const closeModal = () => {
+    setShowModal(false)
+    setSelectedFlashcard(null)
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -541,7 +572,7 @@ export default function Home() {
             </p>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 justify-items-center">
               {flashcards.map((card, index) => (
-                <FlashcardComponent key={index} card={card} />
+                <FlashcardComponent key={index} card={card} onViewFull={handleViewFull} />
               ))}
             </div>
           </div>
@@ -583,6 +614,53 @@ export default function Home() {
           )}
         </div>
       </div>
+
+      {/* Flashcard Modal */}
+      {showModal && selectedFlashcard && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-gray-900 border border-gray-700 rounded-lg shadow-xl max-w-2xl w-full max-h-[80vh] overflow-hidden">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between p-4 border-b border-gray-700">
+              <h3 className="text-lg font-semibold text-gray-100">Flashcard Details</h3>
+              <button
+                onClick={closeModal}
+                className="text-gray-400 hover:text-gray-200 transition-colors p-2 rounded-lg hover:bg-gray-800"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            
+            {/* Modal Content */}
+            <div className="p-6 overflow-y-auto max-h-[calc(80vh-80px)]">
+              {/* Question */}
+              <div className="mb-6">
+                <div className="text-green-400 font-bold mb-3 text-sm">Question:</div>
+                <div className="bg-gray-800 border border-gray-600 rounded-lg p-4 font-mono text-gray-100 text-sm leading-relaxed">
+                  {selectedFlashcard.question}
+                </div>
+              </div>
+              
+              {/* Answer */}
+              <div>
+                <div className="text-blue-400 font-bold mb-3 text-sm">Answer:</div>
+                <div className="bg-gray-800 border border-gray-600 rounded-lg p-4 font-mono text-gray-100 text-sm leading-relaxed whitespace-pre-wrap">
+                  {selectedFlashcard.answer}
+                </div>
+              </div>
+            </div>
+            
+            {/* Modal Footer */}
+            <div className="flex justify-end p-4 border-t border-gray-700">
+              <button
+                onClick={closeModal}
+                className="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-gray-100 rounded-lg transition-colors"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 } 
