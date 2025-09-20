@@ -21,22 +21,36 @@ const FlashcardComponent: React.FC<{ card: Flashcard }> = ({ card }) => {
 
   return (
     <div 
-      className="bg-white/50 backdrop-blur-sm border border-white/30 rounded-xl p-4 cursor-pointer hover:bg-white/60 transition-all duration-300 min-h-[120px] flex items-center justify-center"
+      className="bg-gray-900 border border-gray-700 rounded-lg p-4 cursor-pointer hover:bg-gray-800 transition-all duration-300 min-h-[140px] font-mono"
       onClick={() => setIsFlipped(!isFlipped)}
     >
-      <div className="text-center">
+      <div className="text-gray-100">
         {isFlipped ? (
           <div>
-            <p className="text-sm font-medium text-dark-600 mb-2">Answer:</p>
-            <p className="text-dark-800">{card.answer}</p>
+            <div className="flex items-center mb-3">
+              <div className="w-3 h-3 bg-red-500 rounded-full mr-2"></div>
+              <div className="w-3 h-3 bg-yellow-500 rounded-full mr-2"></div>
+              <div className="w-3 h-3 bg-green-500 rounded-full mr-2"></div>
+              <span className="text-gray-400 text-sm ml-2">answer</span>
+            </div>
+            <div className="text-green-400 font-semibold mb-2">// Answer:</div>
+            <div className="text-gray-100 whitespace-pre-wrap">{card.answer}</div>
           </div>
         ) : (
           <div>
-            <p className="text-sm font-medium text-dark-600 mb-2">Question:</p>
-            <p className="text-dark-800">{card.question}</p>
+            <div className="flex items-center mb-3">
+              <div className="w-3 h-3 bg-red-500 rounded-full mr-2"></div>
+              <div className="w-3 h-3 bg-yellow-500 rounded-full mr-2"></div>
+              <div className="w-3 h-3 bg-green-500 rounded-full mr-2"></div>
+              <span className="text-gray-400 text-sm ml-2">question</span>
+            </div>
+            <div className="text-blue-400 font-semibold mb-2">// Question:</div>
+            <div className="text-gray-100 whitespace-pre-wrap">{card.question}</div>
           </div>
         )}
-        <p className="text-xs text-dark-500 mt-2">Click to {isFlipped ? 'see question' : 'see answer'}</p>
+        <div className="text-gray-500 text-xs mt-3 text-center">
+          {isFlipped ? 'Click to see question' : 'Click to see answer'}
+        </div>
       </div>
     </div>
   )
@@ -255,12 +269,18 @@ export default function Home() {
       <header className="glass-effect border-b border-white/20">
         <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 bg-gradient-to-r from-primary-500 to-primary-600 rounded-xl flex items-center justify-center">
-              <Sparkles className="w-6 h-6 text-white" />
+            <div className="w-10 h-10 bg-gradient-to-r from-amber-500 to-amber-600 rounded-full flex items-center justify-center relative">
+              {/* Cookie design with chocolate chips */}
+              <div className="w-6 h-6 bg-amber-200 rounded-full relative">
+                <div className="absolute top-1 left-1 w-1 h-1 bg-amber-800 rounded-full"></div>
+                <div className="absolute top-2 right-1 w-1 h-1 bg-amber-800 rounded-full"></div>
+                <div className="absolute bottom-1 left-2 w-1 h-1 bg-amber-800 rounded-full"></div>
+                <div className="absolute bottom-2 right-2 w-1 h-1 bg-amber-800 rounded-full"></div>
+              </div>
             </div>
             <div>
-              <h1 className="text-xl font-bold gradient-text">AI Engineer Challenge</h1>
-              <p className="text-sm text-dark-500">Your First LLM Application</p>
+              <h1 className="text-xl font-bold gradient-text">CookiesPDF</h1>
+              <p className="text-sm text-dark-500">Smart PDF Learning Assistant</p>
             </div>
           </div>
           <button
@@ -384,15 +404,15 @@ export default function Home() {
                   <button
                     onClick={generateFlashcards}
                     disabled={isGeneratingFlashcards || !apiKey.trim()}
-                    className="flex items-center space-x-2 px-4 py-2 bg-purple-100 text-purple-800 rounded-lg hover:bg-purple-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    className="flex items-center space-x-2 px-4 py-2 bg-gray-800 text-gray-100 border border-gray-600 rounded-lg hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-mono"
                   >
                     {isGeneratingFlashcards ? (
                       <Loader2 className="w-4 h-4 animate-spin" />
                     ) : (
-                      <Sparkles className="w-4 h-4" />
+                      <span className="text-green-400">$</span>
                     )}
                     <span className="text-sm font-medium">
-                      {isGeneratingFlashcards ? 'Generating...' : 'Generate Flashcards'}
+                      {isGeneratingFlashcards ? 'generating_flashcards...' : 'generate_flashcards()'}
                     </span>
                   </button>
                 </div>
@@ -418,10 +438,10 @@ export default function Home() {
                 <Bot className="w-8 h-8 text-white" />
               </div>
               <h3 className="text-xl font-semibold text-dark-800 mb-2">
-                Welcome to Your AI Chat!
+                Welcome to CookiesPDF!
               </h3>
               <p className="text-dark-600 max-w-md mx-auto">
-                Start a conversation with your AI assistant. Upload a PDF to chat with your documents using RAG, or chat normally. Make sure to set up your API key in the settings above.
+                Upload a PDF to start learning with AI-powered chat and flashcards. Make sure to set up your API key in the settings above.
               </p>
             </div>
           )}
@@ -488,13 +508,20 @@ export default function Home() {
 
       {/* Flashcards Section */}
       {showFlashcards && flashcards.length > 0 && (
-        <div className="glass-effect border-t border-white/20 p-4">
+        <div className="bg-gray-900 border-t border-gray-700 p-4">
           <div className="max-w-6xl mx-auto">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-dark-800">📚 Study Flashcards</h3>
+              <div className="flex items-center space-x-3">
+                <div className="flex items-center space-x-2">
+                  <div className="w-3 h-3 bg-red-500 rounded-full"></div>
+                  <div className="w-3 h-3 bg-yellow-500 rounded-full"></div>
+                  <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                </div>
+                <h3 className="text-lg font-semibold text-gray-100 font-mono">study_flashcards.js</h3>
+              </div>
               <button
                 onClick={() => setShowFlashcards(false)}
-                className="text-dark-500 hover:text-dark-700"
+                className="text-gray-400 hover:text-gray-200 transition-colors"
               >
                 <X className="w-5 h-5" />
               </button>

@@ -6,8 +6,8 @@ import './globals.css'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'AI Engineer Challenge - LLM Chat App',
-  description: 'Your first vibe-coded LLM application with a beautiful modern UI',
+  title: 'CookiesPDF - Smart PDF Learning Assistant',
+  description: 'AI-powered PDF chat and flashcard generation for smart learning',
 }
 
 export default function RootLayout({
