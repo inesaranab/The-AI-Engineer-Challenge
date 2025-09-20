@@ -14,7 +14,6 @@ from typing import Optional
 from aimakerspace.vectordatabase import VectorDatabase
 from aimakerspace.text_utils import CharacterTextSplitter
 from aimakerspace.openai_utils.embedding import EmbeddingModel
-from aimakerspace.openai_utils.chatmodel import ChatOpenAI
 
 # Initialize FastAPI application with a title
 app = FastAPI(title="OpenAI Chat API")
@@ -57,7 +56,7 @@ def extract_text_from_pdf(pdf_file: bytes) -> str:
         raise HTTPException(status_code=400, detail=f"Error extracting text from PDF: {str(e)}")
 
 async def build_rag_system(text: str, api_key: str) -> VectorDatabase:
-    """Build RAG system from PDF text"""
+    """Build RAG system from PDF text using aimakerspace"""
     try:
         # Set the API key for the embedding model
         os.environ["OPENAI_API_KEY"] = api_key
@@ -98,11 +97,11 @@ async def upload_pdf(file: UploadFile = File(...), api_key: str = ""):
         if not pdf_text.strip():
             raise HTTPException(status_code=400, detail="No text found in PDF")
         
-        # Build RAG system
+        # Build RAG system using aimakerspace
         vector_db = await build_rag_system(pdf_text, api_key)
         
         return UploadResponse(
-            message=f"PDF uploaded successfully! Extracted {len(pdf_text)} characters.",
+            message=f"PDF uploaded successfully! Extracted {len(pdf_text)} characters and built vector database.",
             success=True
         )
     
@@ -122,7 +121,7 @@ async def chat(request: ChatRequest):
         async def generate():
             # If we have a vector database (PDF uploaded), use RAG
             if vector_db is not None:
-                # Search for relevant context
+                # Search for relevant context using aimakerspace
                 relevant_chunks = vector_db.search_by_text(request.user_message, k=3, return_as_text=True)
                 context = "\n\n".join(relevant_chunks)
                 

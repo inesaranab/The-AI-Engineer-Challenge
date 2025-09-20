@@ -21,8 +21,18 @@ This document provides instructions for merging the PDF RAG functionality back t
 
 ### Dependencies Added
 - PyPDF2==3.0.1 (PDF text extraction)
-- numpy==1.24.3 (Vector operations)
+- numpy==1.21.6 (Vector operations - Vercel compatible)
 - python-dotenv==1.0.0 (Environment variables)
+
+## 🚨 Vercel Deployment Fix
+
+**IMPORTANT**: The `vercel.json` has been optimized for Vercel's Python runtime with proper configuration for numpy and aimakerspace.
+
+### Key Changes for Vercel Compatibility:
+1. **Updated `vercel.json`**: Added maxLambdaSize and maxDuration configurations
+2. **Optimized numpy version**: Using numpy==1.21.6 (compatible with Vercel)
+3. **Added `.vercelignore`**: Excludes unnecessary files from deployment
+4. **Kept aimakerspace**: Full RAG functionality preserved
 
 ## Deployment Instructions
 
@@ -49,6 +59,7 @@ This document provides instructions for merging the PDF RAG functionality back t
 4. **Deploy to Vercel:**
    - Vercel will automatically detect the changes and redeploy
    - Monitor the deployment in your Vercel dashboard
+   - **Set Environment Variable**: Add `OPENAI_API_KEY` for the backend
 
 ### Option 2: GitHub CLI
 
@@ -96,8 +107,7 @@ After deployment, test the following features:
 
 ## Environment Variables
 
-Ensure the following environment variables are set in Vercel:
-
+### For Vercel (Both Frontend and Backend):
 - `OPENAI_API_KEY`: Your OpenAI API key (for production use)
 
 ## File Structure
@@ -133,9 +143,25 @@ If issues occur after deployment:
    git push origin main --force
    ```
 
+## Local Development
+
+For local testing, run:
+```bash
+# Backend
+cd api
+pip install -r requirements.txt
+python app.py
+
+# Frontend (in another terminal)
+cd frontend
+npm install
+npm run dev
+```
+
 ## Notes
 
 - The aimakerspace library is included in the repository for simplicity
 - PDF processing happens server-side for security
 - Vector database is stored in memory (resets on server restart)
 - For production, consider using a persistent vector database like Pinecone or Weaviate
+- **Frontend and Backend are now completely separate** - this is a cleaner architecture

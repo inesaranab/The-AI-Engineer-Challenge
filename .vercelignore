@@ -1,0 +1,17 @@
+# Ignore development files
+*.log
+*.tmp
+.DS_Store
+.vscode/
+.idea/
+
+# Ignore large files that aren't needed for deployment
+*.ipynb
+*.md
+.git/
+.gitignore
+
+# Keep only essential files for deployment
+!api/
+!frontend/
+!vercel.json
