@@ -21,7 +21,7 @@ const FlashcardComponent: React.FC<{ card: Flashcard }> = ({ card }) => {
 
   return (
     <div 
-      className="relative w-full h-48 cursor-pointer perspective-1000 flashcard-container transition-all duration-300"
+      className="relative w-80 h-48 sm:w-full cursor-pointer perspective-1000 flashcard-container transition-all duration-300"
       onClick={() => setIsFlipped(!isFlipped)}
     >
       <div 
@@ -36,15 +36,15 @@ const FlashcardComponent: React.FC<{ card: Flashcard }> = ({ card }) => {
       >
         {/* Front of card (Question) */}
         <div 
-          className="absolute w-full h-full bg-gray-900 border border-gray-700 rounded-lg p-4 font-mono backface-hidden"
+          className="absolute w-full h-full bg-gray-900 border border-gray-700 rounded-lg shadow-md font-mono backface-hidden"
           style={{ backfaceVisibility: 'hidden' }}
         >
-          <div className="flex flex-col h-full justify-center">
-            <div className="text-green-400 font-bold mb-3">Q:</div>
-            <div className="text-gray-100 whitespace-pre-wrap leading-relaxed">
-              {card.question}
+          <div className="flex flex-col items-center justify-center text-center h-full p-4">
+            <div className="text-green-400 font-bold mb-3 text-sm">Q:</div>
+            <div className="text-gray-100 text-sm leading-relaxed overflow-auto flex-1 flex items-center justify-center max-h-24">
+              <span className="line-clamp-6">{card.question}</span>
             </div>
-            <div className="text-gray-500 text-xs mt-4 text-center">
+            <div className="text-gray-500 text-xs mt-2">
               Click to reveal answer
             </div>
           </div>
@@ -52,18 +52,18 @@ const FlashcardComponent: React.FC<{ card: Flashcard }> = ({ card }) => {
 
         {/* Back of card (Answer) */}
         <div 
-          className="absolute w-full h-full bg-gray-900 border border-gray-700 rounded-lg p-4 font-mono backface-hidden rotate-y-180"
+          className="absolute w-full h-full bg-gray-900 border border-gray-700 rounded-lg shadow-md font-mono backface-hidden rotate-y-180"
           style={{ 
             backfaceVisibility: 'hidden',
             transform: 'rotateY(180deg)'
           }}
         >
-          <div className="flex flex-col h-full justify-center">
-            <div className="text-blue-400 font-bold mb-3">A:</div>
-            <div className="text-gray-100 whitespace-pre-wrap leading-relaxed">
-              {card.answer}
+          <div className="flex flex-col items-center justify-center text-center h-full p-4">
+            <div className="text-blue-400 font-bold mb-3 text-sm">A:</div>
+            <div className="text-gray-100 text-sm leading-relaxed overflow-auto flex-1 flex items-center justify-center max-h-24">
+              <span className="line-clamp-6">{card.answer}</span>
             </div>
-            <div className="text-gray-500 text-xs mt-4 text-center">
+            <div className="text-gray-500 text-xs mt-2">
               Click to see question
             </div>
           </div>
@@ -539,7 +539,7 @@ export default function Home() {
             <p className="text-gray-400 text-sm mb-6 text-center">
               Click any card to flip and reveal the answer
             </p>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 justify-items-center">
               {flashcards.map((card, index) => (
                 <FlashcardComponent key={index} card={card} />
               ))}
