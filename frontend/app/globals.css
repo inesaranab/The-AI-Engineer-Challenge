@@ -17,6 +17,36 @@
     @apply bg-white/80 backdrop-blur-sm border border-white/20;
   }
   
+  /* 3D Flip Card Styles */
+  .perspective-1000 {
+    perspective: 1000px;
+  }
+  
+  .transform-style-preserve-3d {
+    transform-style: preserve-3d;
+  }
+  
+  .backface-hidden {
+    backface-visibility: hidden;
+  }
+  
+  .rotate-y-180 {
+    transform: rotateY(180deg);
+  }
+  
+  /* Flashcard hover effects */
+  .flashcard-container:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+  }
+  
+  /* Mobile touch optimization */
+  @media (max-width: 768px) {
+    .perspective-1000 {
+      perspective: 800px;
+    }
+  }
+  
   .gradient-text {
     @apply bg-gradient-to-r from-primary-600 to-primary-800 bg-clip-text text-transparent;
   }

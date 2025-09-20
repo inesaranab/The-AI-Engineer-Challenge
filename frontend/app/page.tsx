@@ -21,35 +21,52 @@ const FlashcardComponent: React.FC<{ card: Flashcard }> = ({ card }) => {
 
   return (
     <div 
-      className="bg-gray-900 border border-gray-700 rounded-lg p-4 cursor-pointer hover:bg-gray-800 transition-all duration-300 min-h-[140px] font-mono"
+      className="relative w-full h-48 cursor-pointer perspective-1000 flashcard-container transition-all duration-300"
       onClick={() => setIsFlipped(!isFlipped)}
     >
-      <div className="text-gray-100">
-        {isFlipped ? (
-          <div>
-            <div className="flex items-center mb-3">
-              <div className="w-3 h-3 bg-red-500 rounded-full mr-2"></div>
-              <div className="w-3 h-3 bg-yellow-500 rounded-full mr-2"></div>
-              <div className="w-3 h-3 bg-green-500 rounded-full mr-2"></div>
-              <span className="text-gray-400 text-sm ml-2">answer</span>
+      <div 
+        className={`relative w-full h-full transition-transform duration-700 transform-style-preserve-3d ${
+          isFlipped ? 'rotate-y-180' : ''
+        }`}
+        style={{
+          transformStyle: 'preserve-3d',
+          transform: isFlipped ? 'rotateY(180deg)' : 'rotateY(0deg)',
+          transition: 'transform 0.7s ease-in-out'
+        }}
+      >
+        {/* Front of card (Question) */}
+        <div 
+          className="absolute w-full h-full bg-gray-900 border border-gray-700 rounded-lg p-4 font-mono backface-hidden"
+          style={{ backfaceVisibility: 'hidden' }}
+        >
+          <div className="flex flex-col h-full justify-center">
+            <div className="text-green-400 font-bold mb-3">Q:</div>
+            <div className="text-gray-100 whitespace-pre-wrap leading-relaxed">
+              {card.question}
             </div>
-            <div className="text-green-400 font-semibold mb-2">// Answer:</div>
-            <div className="text-gray-100 whitespace-pre-wrap">{card.answer}</div>
-          </div>
-        ) : (
-          <div>
-            <div className="flex items-center mb-3">
-              <div className="w-3 h-3 bg-red-500 rounded-full mr-2"></div>
-              <div className="w-3 h-3 bg-yellow-500 rounded-full mr-2"></div>
-              <div className="w-3 h-3 bg-green-500 rounded-full mr-2"></div>
-              <span className="text-gray-400 text-sm ml-2">question</span>
+            <div className="text-gray-500 text-xs mt-4 text-center">
+              Click to reveal answer
             </div>
-            <div className="text-blue-400 font-semibold mb-2">// Question:</div>
-            <div className="text-gray-100 whitespace-pre-wrap">{card.question}</div>
           </div>
-        )}
-        <div className="text-gray-500 text-xs mt-3 text-center">
-          {isFlipped ? 'Click to see question' : 'Click to see answer'}
+        </div>
+
+        {/* Back of card (Answer) */}
+        <div 
+          className="absolute w-full h-full bg-gray-900 border border-gray-700 rounded-lg p-4 font-mono backface-hidden rotate-y-180"
+          style={{ 
+            backfaceVisibility: 'hidden',
+            transform: 'rotateY(180deg)'
+          }}
+        >
+          <div className="flex flex-col h-full justify-center">
+            <div className="text-blue-400 font-bold mb-3">A:</div>
+            <div className="text-gray-100 whitespace-pre-wrap leading-relaxed">
+              {card.answer}
+            </div>
+            <div className="text-gray-500 text-xs mt-4 text-center">
+              Click to see question
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -511,22 +528,18 @@ export default function Home() {
         <div className="bg-gray-900 border-t border-gray-700 p-4">
           <div className="max-w-6xl mx-auto">
             <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center space-x-3">
-                <div className="flex items-center space-x-2">
-                  <div className="w-3 h-3 bg-red-500 rounded-full"></div>
-                  <div className="w-3 h-3 bg-yellow-500 rounded-full"></div>
-                  <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-                </div>
-                <h3 className="text-lg font-semibold text-gray-100 font-mono">study_flashcards.js</h3>
-              </div>
+              <h3 className="text-xl font-semibold text-gray-100">Study Flashcards</h3>
               <button
                 onClick={() => setShowFlashcards(false)}
-                className="text-gray-400 hover:text-gray-200 transition-colors"
+                className="text-gray-400 hover:text-gray-200 transition-colors p-2 rounded-lg hover:bg-gray-800"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <p className="text-gray-400 text-sm mb-6 text-center">
+              Click any card to flip and reveal the answer
+            </p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
               {flashcards.map((card, index) => (
                 <FlashcardComponent key={index} card={card} />
               ))}
