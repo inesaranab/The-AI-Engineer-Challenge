@@ -131,6 +131,9 @@ export default function Home() {
   const [studyProgress, setStudyProgress] = useState(0)
   const [activeTopic, setActiveTopic] = useState<string | null>(null)
   const [isStudyPanelOpen, setIsStudyPanelOpen] = useState(false)
+  const [sessionCards, setSessionCards] = useState<Flashcard[]>([])
+  const [gradedCount, setGradedCount] = useState(0)
+  const [showDone, setShowDone] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const textSelectionRef = useRef<HTMLDivElement>(null)
@@ -163,6 +166,30 @@ export default function Home() {
     
     document.addEventListener('keydown', handleKeyDown)
     return () => document.removeEventListener('keydown', handleKeyDown)
+  }, [isStudyPanelOpen])
+
+  // Handle topic changes - reset session
+  useEffect(() => {
+    if (isStudyPanelOpen && flashcards.length > 0) {
+      createSessionSnapshot()
+      if (activeTopic) {
+        // Simple toast notification
+        const toast = document.createElement('div')
+        toast.className = 'fixed top-4 right-4 bg-blue-600 text-white px-4 py-2 rounded-lg shadow-lg z-50'
+        toast.textContent = `Topic changed—session reset`
+        document.body.appendChild(toast)
+        setTimeout(() => {
+          document.body.removeChild(toast)
+        }, 3000)
+      }
+    }
+  }, [activeTopic, isStudyPanelOpen, flashcards])
+
+  // Handle panel opening - create new session
+  useEffect(() => {
+    if (isStudyPanelOpen && flashcards.length > 0) {
+      createSessionSnapshot()
+    }
   }, [isStudyPanelOpen])
 
   const handleFileUpload = async (file: File) => {
@@ -254,6 +281,7 @@ export default function Home() {
       setFlashcards(result.flashcards)
       setShowFlashcards(true)
       setIsStudyPanelOpen(true)
+      // Session will be created by useEffect when panel opens
     } catch (error) {
       console.error('Flashcard generation error:', error)
       alert(`Error generating flashcards: ${error instanceof Error ? error.message : 'Unknown error'}`)
@@ -300,18 +328,24 @@ export default function Home() {
   }
 
   const handleCardGrading = (grade: 1 | 2 | 3) => {
-    const sessionCards = getStudySessionCards()
-    setStudyProgress(prev => prev + 1)
-    if (currentCardIndex < sessionCards.length - 1) {
-      setCurrentCardIndex(prev => prev + 1)
+    if (showDone) return // Don't allow grading when done view is showing
+    
+    const currentSession = getCurrentSessionCards()
+    const newGradedCount = gradedCount + 1
+    
+    setGradedCount(newGradedCount)
+    
+    if (newGradedCount >= currentSession.length) {
+      // Session completed - show done view
+      setShowDone(true)
     } else {
-      // Session completed - show completion state
-      setCurrentCardIndex(0)
-      setStudyProgress(0)
+      // Move to next card
+      setCurrentCardIndex(prev => Math.min(prev + 1, currentSession.length - 1))
     }
   }
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (showDone) return // Don't allow grading when done view is showing
     if (e.key === '1') handleCardGrading(1)
     if (e.key === '2') handleCardGrading(2)
     if (e.key === '3') handleCardGrading(3)
@@ -332,10 +366,26 @@ export default function Home() {
     return flashcards.filter(card => matchesTopic(card, activeTopic))
   }
 
-  // Get study session cards (capped at 9)
-  const getStudySessionCards = () => {
+  // Create a new session snapshot
+  const createSessionSnapshot = () => {
     const filtered = getFilteredFlashcards()
-    return filtered.slice(0, 9)
+    const snapshot = filtered.slice(0, 9)
+    setSessionCards(snapshot)
+    setCurrentCardIndex(0)
+    setGradedCount(0)
+    setShowDone(false)
+    return snapshot
+  }
+
+  // Ensure current card index is within bounds
+  const getCurrentCardIndex = () => {
+    const session = getCurrentSessionCards()
+    return Math.max(0, Math.min(currentCardIndex, session.length - 1))
+  }
+
+  // Get current session cards (frozen snapshot)
+  const getCurrentSessionCards = () => {
+    return sessionCards
   }
 
   // Handle slash commands
@@ -752,7 +802,7 @@ export default function Home() {
                   <span className="font-medium">Topic:</span> {activeTopic}
                 </div>
                 <div className="text-xs text-blue-600">
-                  {getFilteredFlashcards().length} found · capped at 9
+                  {getCurrentSessionCards().length} cards in session
                 </div>
               </div>
             )}
@@ -761,30 +811,31 @@ export default function Home() {
             <div className="px-4 py-2 border-b border-gray-200">
               <div className="flex items-center justify-between text-sm text-gray-600 mb-2">
                 <span>Progress</span>
-                <span>{studyProgress} / {getStudySessionCards().length}</span>
+                <span>{gradedCount} / {getCurrentSessionCards().length}</span>
               </div>
               <div className="w-full bg-gray-200 rounded-full h-2">
                 <div 
                   className="bg-blue-600 h-2 rounded-full transition-all duration-300"
-                  style={{ width: `${(studyProgress / getStudySessionCards().length) * 100}%` }}
+                  style={{ width: `${getCurrentSessionCards().length > 0 ? (gradedCount / getCurrentSessionCards().length) * 100 : 0}%` }}
                 ></div>
               </div>
             </div>
             
             {/* Study Card */}
             <div className="flex-1 p-4 flex flex-col items-center justify-center">
-              {studyProgress >= getStudySessionCards().length && getStudySessionCards().length > 0 ? (
+              {showDone ? (
                 <div className="text-center">
                   <div className="text-2xl mb-4">🎉</div>
                   <div className="text-lg font-semibold text-gray-900 mb-2">Session Complete!</div>
                   <div className="text-sm text-gray-600 mb-6">
-                    You've reviewed all {getStudySessionCards().length} cards
+                    You've reviewed all {getCurrentSessionCards().length} cards
                   </div>
                   <div className="space-y-2">
                     <button
                       onClick={() => {
                         setCurrentCardIndex(0)
-                        setStudyProgress(0)
+                        setGradedCount(0)
+                        setShowDone(false)
                       }}
                       className="w-full rounded-xl px-4 py-2 font-medium shadow-sm bg-blue-600 text-white hover:bg-blue-700 transition-colors"
                     >
@@ -798,7 +849,7 @@ export default function Home() {
                     </button>
                   </div>
                 </div>
-              ) : getStudySessionCards().length > 0 ? (
+              ) : getCurrentSessionCards().length > 0 ? (
                 <div className="w-full max-w-sm">
                   <div 
                     className="study-card relative w-full h-64 bg-white border border-gray-200 rounded-2xl shadow-sm cursor-pointer transition-transform duration-300 hover:shadow-md"
@@ -812,13 +863,13 @@ export default function Home() {
                     <div className="absolute inset-0 p-6 flex flex-col items-center justify-center text-center backface-hidden">
                       <div className="text-blue-600 font-bold mb-3 text-sm">Q:</div>
                       <div className="text-gray-800 text-sm leading-relaxed">
-                        {getStudySessionCards()[currentCardIndex]?.question}
+                        {getCurrentSessionCards()[getCurrentCardIndex()]?.question}
                       </div>
                     </div>
                     <div className="absolute inset-0 p-6 flex flex-col items-center justify-center text-center bg-gray-50 rounded-2xl rotate-y-180 backface-hidden">
                       <div className="text-green-600 font-bold mb-3 text-sm">A:</div>
                       <div className="text-gray-800 text-sm leading-relaxed">
-                        {getStudySessionCards()[currentCardIndex]?.answer}
+                        {getCurrentSessionCards()[getCurrentCardIndex()]?.answer}
                       </div>
                     </div>
                   </div>
@@ -832,8 +883,7 @@ export default function Home() {
                       <button
                         onClick={() => handleCardGrading(1)}
                         onKeyDown={handleKeyPress}
-                        disabled={currentCardIndex >= getStudySessionCards().length - 1}
-                        className="flex-1 flex items-center justify-center space-x-2 px-3 py-2 bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition-colors disabled:opacity-50"
+                        className="flex-1 flex items-center justify-center space-x-2 px-3 py-2 bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition-colors"
                       >
                         <CheckCircle className="w-4 h-4" />
                         <span className="text-sm font-medium">Knew (1)</span>
@@ -841,8 +891,7 @@ export default function Home() {
                       <button
                         onClick={() => handleCardGrading(2)}
                         onKeyDown={handleKeyPress}
-                        disabled={currentCardIndex >= getStudySessionCards().length - 1}
-                        className="flex-1 flex items-center justify-center space-x-2 px-3 py-2 bg-yellow-100 text-yellow-700 rounded-lg hover:bg-yellow-200 transition-colors disabled:opacity-50"
+                        className="flex-1 flex items-center justify-center space-x-2 px-3 py-2 bg-yellow-100 text-yellow-700 rounded-lg hover:bg-yellow-200 transition-colors"
                       >
                         <HelpCircle className="w-4 h-4" />
                         <span className="text-sm font-medium">Unsure (2)</span>
@@ -850,8 +899,7 @@ export default function Home() {
                       <button
                         onClick={() => handleCardGrading(3)}
                         onKeyDown={handleKeyPress}
-                        disabled={currentCardIndex >= getStudySessionCards().length - 1}
-                        className="flex-1 flex items-center justify-center space-x-2 px-3 py-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-colors disabled:opacity-50"
+                        className="flex-1 flex items-center justify-center space-x-2 px-3 py-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-colors"
                       >
                         <XCircle className="w-4 h-4" />
                         <span className="text-sm font-medium">Didn't know (3)</span>
