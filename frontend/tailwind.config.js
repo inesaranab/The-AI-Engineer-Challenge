@@ -8,18 +8,33 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        primary: {
-          50: '#eff6ff',
-          100: '#dbeafe',
-          200: '#bfdbfe',
-          300: '#93c5fd',
-          400: '#60a5fa',
-          500: '#3b82f6',
-          600: '#2563eb',
-          700: '#1d4ed8',
-          800: '#1e40af',
-          900: '#1e3a8a',
+        // Cookie-inspired warm palette
+        cookie: {
+          50: '#fef7ed',
+          100: '#fdedd3',
+          200: '#fbd9a5',
+          300: '#f8c16d',
+          400: '#f5a33a',
+          500: '#f28c0c',
+          600: '#d97706',
+          700: '#b45309',
+          800: '#92400e',
+          900: '#78350f',
         },
+        // Chocolate browns for depth
+        chocolate: {
+          50: '#faf7f2',
+          100: '#f3ede1',
+          200: '#e6d9c2',
+          300: '#d4c1a0',
+          400: '#c1a67a',
+          500: '#a68b5b',
+          600: '#8b6f47',
+          700: '#6b5538',
+          800: '#4a3c26',
+          900: '#2d2417',
+        },
+        // Deep blacks like Cursor
         dark: {
           50: '#f8fafc',
           100: '#f1f5f9',
@@ -31,6 +46,21 @@ module.exports = {
           700: '#334155',
           800: '#1e293b',
           900: '#0f172a',
+          950: '#020617',
+        },
+        // Pure black for Cursor-like interface
+        black: {
+          50: '#f6f6f6',
+          100: '#e7e7e7',
+          200: '#d1d1d1',
+          300: '#b0b0b0',
+          400: '#888888',
+          500: '#6d6d6d',
+          600: '#5d5d5d',
+          700: '#4f4f4f',
+          800: '#454545',
+          900: '#3d3d3d',
+          950: '#1a1a1a',
         }
       },
       animation: {

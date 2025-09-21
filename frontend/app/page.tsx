@@ -53,16 +53,16 @@ const FlashcardComponent: React.FC<{
       >
         {/* Front of card (Question) */}
         <div 
-          className="absolute w-full h-full bg-gray-900 border border-gray-700 rounded-lg shadow-md font-mono backface-hidden cursor-pointer"
+          className="absolute w-full h-full bg-black-900 border border-black-700 rounded-lg shadow-md font-mono backface-hidden cursor-pointer"
           style={{ backfaceVisibility: 'hidden' }}
           onClick={handleCardClick}
         >
           <div className="flex flex-col items-center justify-center text-center h-full p-4">
             <div className="text-green-400 font-bold mb-3 text-sm">Q:</div>
-            <div className="text-gray-100 text-sm leading-relaxed overflow-auto flex-1 flex items-center justify-center max-h-24">
+            <div className="text-white text-sm leading-relaxed overflow-auto flex-1 flex items-center justify-center max-h-24">
               <span className="line-clamp-6">{card.question}</span>
             </div>
-            <div className="text-gray-500 text-xs mt-2">
+            <div className="text-cookie-500 text-xs mt-2">
               Click to reveal answer
             </div>
           </div>
@@ -70,7 +70,7 @@ const FlashcardComponent: React.FC<{
 
         {/* Back of card (Answer Preview) */}
         <div 
-          className="absolute w-full h-full bg-gray-900 border border-gray-700 rounded-lg shadow-md font-mono backface-hidden rotate-y-180"
+          className="absolute w-full h-full bg-black-800 border border-black-700 rounded-lg shadow-md font-mono backface-hidden rotate-y-180"
           style={{ 
             backfaceVisibility: 'hidden',
             transform: 'rotateY(180deg)'
@@ -78,16 +78,16 @@ const FlashcardComponent: React.FC<{
         >
           <div className="flex flex-col items-center justify-center text-center h-full p-4">
             <div className="text-blue-400 font-bold mb-3 text-sm">A:</div>
-            <div className="text-gray-100 text-sm leading-relaxed overflow-auto flex-1 flex items-center justify-center max-h-16">
+            <div className="text-white text-sm leading-relaxed overflow-auto flex-1 flex items-center justify-center max-h-16">
               <span className="line-clamp-4">{card.answer}</span>
             </div>
             <button
               onClick={handleViewFullClick}
-              className="mt-2 px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white text-xs rounded transition-colors"
+              className="mt-2 px-3 py-1 bg-cookie-600 hover:bg-cookie-700 text-black text-xs rounded transition-colors"
             >
               View Full Answer
             </button>
-            <div className="text-gray-500 text-xs mt-1">
+            <div className="text-cookie-500 text-xs mt-1">
               Click to see question
             </div>
           </div>
@@ -507,15 +507,15 @@ export default function Home() {
   return (
     <div className="min-h-screen flex flex-col">
       {/* Header */}
-      <header className="sticky top-0 z-40 bg-gray-900/90 backdrop-blur border-b border-gray-700">
+      <header className="sticky top-0 z-40 bg-black-950/90 backdrop-blur border-b border-black-800">
         <div className="max-w-[1200px] mx-auto px-4 py-2 flex items-center justify-between">
           <div className="flex items-center space-x-3">
-            <div className="w-8 h-8 bg-gradient-to-r from-amber-500 to-amber-600 rounded-full flex items-center justify-center relative">
-              <div className="w-5 h-5 bg-amber-200 rounded-full relative">
-                <div className="absolute top-0.5 left-0.5 w-0.5 h-0.5 bg-amber-800 rounded-full"></div>
-                <div className="absolute top-1 right-0.5 w-0.5 h-0.5 bg-amber-800 rounded-full"></div>
-                <div className="absolute bottom-0.5 left-1 w-0.5 h-0.5 bg-amber-800 rounded-full"></div>
-                <div className="absolute bottom-1 right-1 w-0.5 h-0.5 bg-amber-800 rounded-full"></div>
+            <div className="w-8 h-8 bg-gradient-to-r from-cookie-500 to-cookie-600 rounded-full flex items-center justify-center relative">
+              <div className="w-5 h-5 bg-cookie-200 rounded-full relative">
+                <div className="absolute top-0.5 left-0.5 w-0.5 h-0.5 bg-chocolate-800 rounded-full"></div>
+                <div className="absolute top-1 right-0.5 w-0.5 h-0.5 bg-chocolate-800 rounded-full"></div>
+                <div className="absolute bottom-0.5 left-1 w-0.5 h-0.5 bg-chocolate-800 rounded-full"></div>
+                <div className="absolute bottom-1 right-1 w-0.5 h-0.5 bg-chocolate-800 rounded-full"></div>
               </div>
             </div>
             <h1 className="text-lg font-bold text-white">CookiesPDF</h1>
@@ -524,7 +524,7 @@ export default function Home() {
             <button
               onClick={generateFlashcards}
               disabled={isGeneratingFlashcards || !apiKey.trim() || !uploadedFile}
-              className="rounded-xl px-4 py-2 font-medium shadow-sm bg-amber-600 text-black hover:bg-amber-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center space-x-2"
+              className="rounded-xl px-4 py-2 font-medium shadow-sm bg-cookie-600 text-black hover:bg-cookie-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center space-x-2"
             >
               {isGeneratingFlashcards ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
@@ -535,9 +535,9 @@ export default function Home() {
             </button>
             <button
               onClick={() => setShowSettings(!showSettings)}
-              className="p-2 rounded-lg hover:bg-gray-700 transition-colors"
+              className="p-2 rounded-lg hover:bg-black-800 transition-colors"
             >
-              <Settings className="w-5 h-5 text-gray-300" />
+              <Settings className="w-5 h-5 text-cookie-300" />
             </button>
           </div>
         </div>
@@ -545,20 +545,20 @@ export default function Home() {
 
       {/* Settings Modal */}
       {showSettings && (
-        <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4">
-          <div className="bg-gray-800 rounded-2xl border border-gray-600 shadow-xl max-w-2xl w-full max-h-[80vh] overflow-hidden">
-            <div className="flex items-center justify-between p-4 border-b border-gray-600">
+        <div className="fixed inset-0 bg-black-950 bg-opacity-60 flex items-center justify-center z-50 p-4">
+          <div className="bg-black-900 rounded-2xl border border-black-700 shadow-xl max-w-2xl w-full max-h-[80vh] overflow-hidden">
+            <div className="flex items-center justify-between p-4 border-b border-black-700">
               <h3 className="text-lg font-semibold text-white">Settings</h3>
               <button
                 onClick={() => setShowSettings(false)}
-                className="text-gray-400 hover:text-gray-200 transition-colors p-2 rounded-lg hover:bg-gray-700"
+                className="text-cookie-400 hover:text-cookie-200 transition-colors p-2 rounded-lg hover:bg-black-800"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
             <div className="p-6 space-y-4 overflow-y-auto max-h-[calc(80vh-80px)]">
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
+                <label className="block text-sm font-medium text-cookie-300 mb-2">
                   OpenAI API Key
                 </label>
                 <input
@@ -566,11 +566,11 @@ export default function Home() {
                   value={apiKey}
                   onChange={(e) => setApiKey(e.target.value)}
                   placeholder="sk-..."
-                  className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent text-white placeholder-gray-400"
+                  className="w-full px-3 py-2 bg-black-800 border border-black-700 rounded-lg focus:ring-2 focus:ring-cookie-500 focus:border-transparent text-white placeholder-cookie-400"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
+                <label className="block text-sm font-medium text-cookie-300 mb-2">
                   Developer Message (System Prompt)
                 </label>
                 <textarea
@@ -578,17 +578,17 @@ export default function Home() {
                   onChange={(e) => setDeveloperMessage(e.target.value)}
                   placeholder="You are a helpful AI assistant..."
                   rows={3}
-                  className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent text-white placeholder-gray-400"
+                  className="w-full px-3 py-2 bg-black-800 border border-black-700 rounded-lg focus:ring-2 focus:ring-cookie-500 focus:border-transparent text-white placeholder-cookie-400"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
+                <label className="block text-sm font-medium text-cookie-300 mb-2">
                   Model
                 </label>
                 <select
                   value={model}
                   onChange={(e) => setModel(e.target.value)}
-                  className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent text-white"
+                  className="w-full px-3 py-2 bg-black-800 border border-black-700 rounded-lg focus:ring-2 focus:ring-cookie-500 focus:border-transparent text-white"
                 >
                   <option value="gpt-4.1-mini">GPT-4.1 Mini</option>
                   <option value="gpt-4">GPT-4</option>
@@ -597,22 +597,22 @@ export default function Home() {
               </div>
               
               {/* PDF Upload Section */}
-              <div className="border-t border-gray-600 pt-4">
-                <label className="block text-sm font-medium text-gray-300 mb-2">
+              <div className="border-t border-black-700 pt-4">
+                <label className="block text-sm font-medium text-cookie-300 mb-2">
                   Upload PDF for RAG Chat
                 </label>
                 
                 {!uploadedFile ? (
                   <div className="space-y-3">
                     <div
-                      className="border-2 border-dashed border-gray-600 rounded-lg p-6 text-center hover:border-amber-400 transition-colors cursor-pointer"
+                      className="border-2 border-dashed border-black-700 rounded-lg p-6 text-center hover:border-cookie-400 transition-colors cursor-pointer"
                       onClick={() => fileInputRef.current?.click()}
                     >
-                      <Upload className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-                      <p className="text-sm text-gray-300">
+                      <Upload className="w-8 h-8 text-cookie-400 mx-auto mb-2" />
+                      <p className="text-sm text-cookie-300">
                         Click to upload a PDF file
                       </p>
-                      <p className="text-xs text-gray-400 mt-1">
+                      <p className="text-xs text-cookie-400 mt-1">
                         The AI will only answer questions using information from this document
                       </p>
                     </div>
@@ -625,24 +625,24 @@ export default function Home() {
                     />
                   </div>
                 ) : (
-                  <div className="bg-amber-900/20 border border-amber-600/30 rounded-lg p-4">
+                  <div className="bg-cookie-900/20 border border-cookie-600/30 rounded-lg p-4">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-3">
-                        <FileText className="w-5 h-5 text-amber-400" />
+                        <FileText className="w-5 h-5 text-cookie-400" />
                         <div>
-                          <p className="text-sm font-medium text-amber-200">
+                          <p className="text-sm font-medium text-cookie-200">
                             {uploadedFile.name}
                           </p>
-                          <p className="text-xs text-amber-300">
+                          <p className="text-xs text-cookie-300">
                             Ready for RAG chat
                           </p>
                         </div>
                       </div>
                       <button
                         onClick={removeUploadedFile}
-                        className="p-1 hover:bg-amber-800/30 rounded transition-colors"
+                        className="p-1 hover:bg-cookie-800/30 rounded transition-colors"
                       >
-                        <X className="w-4 h-4 text-amber-400" />
+                        <X className="w-4 h-4 text-cookie-400" />
                       </button>
                     </div>
                   </div>
@@ -654,7 +654,7 @@ export default function Home() {
                       ? 'text-green-400' 
                       : uploadStatus.includes('failed') || uploadStatus.includes('Please')
                       ? 'text-red-400'
-                      : 'text-amber-400'
+                      : 'text-cookie-400'
                   }`}>
                     {uploadStatus}
                   </div>
@@ -662,8 +662,8 @@ export default function Home() {
                 
                 {isUploading && (
                   <div className="flex items-center space-x-2 mt-2">
-                    <Loader2 className="w-4 h-4 animate-spin text-amber-400" />
-                    <span className="text-sm text-amber-400">Processing PDF...</span>
+                    <Loader2 className="w-4 h-4 animate-spin text-cookie-400" />
+                    <span className="text-sm text-cookie-400">Processing PDF...</span>
                   </div>
                 )}
               </div>
@@ -673,17 +673,17 @@ export default function Home() {
       )}
 
       {/* Chat Messages */}
-      <div className="flex-1 overflow-y-auto p-4 bg-gray-900">
+      <div className="flex-1 overflow-y-auto p-4 bg-black-950">
         <div className="max-w-4xl mx-auto space-y-4">
           {messages.length === 0 && (
             <div className="text-center py-12">
-              <div className="w-16 h-16 bg-gradient-to-r from-amber-500 to-amber-600 rounded-full flex items-center justify-center mx-auto mb-4">
+              <div className="w-16 h-16 bg-gradient-to-r from-cookie-500 to-cookie-600 rounded-full flex items-center justify-center mx-auto mb-4">
                 <Bot className="w-8 h-8 text-black" />
               </div>
               <h3 className="text-xl font-semibold text-white mb-2">
                 Welcome to CookiesPDF!
               </h3>
-              <p className="text-gray-300 max-w-md mx-auto">
+              <p className="text-cookie-300 max-w-md mx-auto">
                 Upload a PDF to start learning with AI-powered chat and flashcards. Make sure to set up your API key in the settings above.
               </p>
             </div>
@@ -699,17 +699,17 @@ export default function Home() {
               <div className="flex items-start space-x-3">
                 <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
                   message.role === 'user' 
-                    ? 'bg-amber-600' 
-                    : 'bg-gray-700'
+                    ? 'bg-cookie-600' 
+                    : 'bg-black-800'
                 }`}>
                   {message.role === 'user' ? (
                     <User className="w-4 h-4 text-black" />
                   ) : (
-                    <Bot className="w-4 h-4 text-amber-400" />
+                    <Bot className="w-4 h-4 text-cookie-400" />
                   )}
                 </div>
                 <div className="flex-1">
-                  <p className="text-sm font-medium mb-1 text-gray-300">
+                  <p className="text-sm font-medium mb-1 text-cookie-300">
                     {message.role === 'user' ? 'You' : 'AI Assistant'}
                   </p>
                   <div 
@@ -720,7 +720,7 @@ export default function Home() {
                     style={{ userSelect: message.role === 'assistant' ? 'text' : 'none' }}
                   >
                     {message.content.split('\n').map((line, index) => (
-                      <p key={index} className="mb-2 last:mb-0 text-gray-200">
+                      <p key={index} className="mb-2 last:mb-0 text-white">
                         {line}
                       </p>
                     ))}
@@ -731,14 +731,14 @@ export default function Home() {
                     <div className="flex flex-wrap gap-2 mt-3">
                       {message.citations.slice(0, 3).map((citation, index) => (
                         <div key={index} className="relative group">
-                          <div className="inline-flex items-center rounded-full px-2.5 py-1 text-xs bg-amber-900/30 hover:bg-amber-800/40 transition-colors cursor-pointer border border-amber-600/30">
-                            <span className="text-amber-200">
+                          <div className="inline-flex items-center rounded-full px-2.5 py-1 text-xs bg-cookie-900/30 hover:bg-cookie-800/40 transition-colors cursor-pointer border border-cookie-600/30">
+                            <span className="text-cookie-200">
                               {citation.docName} (p. {citation.page})
                             </span>
                           </div>
                           {/* Hover popover */}
-                          <div className="absolute bottom-full left-0 mb-2 w-64 p-3 bg-gray-800 border border-gray-600 rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-10">
-                            <div className="text-xs text-gray-300 line-clamp-4">
+                          <div className="absolute bottom-full left-0 mb-2 w-64 p-3 bg-black-800 border border-black-700 rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-10">
+                            <div className="text-xs text-cookie-300 line-clamp-4">
                               {citation.snippet.length > 180 
                                 ? `${citation.snippet.substring(0, 180)}...` 
                                 : citation.snippet
@@ -750,7 +750,7 @@ export default function Home() {
                     </div>
                   )}
                   
-                  <p className="text-xs text-gray-500 mt-2">
+                  <p className="text-xs text-cookie-500 mt-2">
                     {message.timestamp.toLocaleTimeString()}
                   </p>
                 </div>
@@ -761,15 +761,15 @@ export default function Home() {
           {isLoading && (
             <div className="chat-bubble ai-bubble animate-fade-in">
               <div className="flex items-start space-x-3">
-                <div className="w-8 h-8 bg-gray-700 rounded-full flex items-center justify-center flex-shrink-0">
-                  <Bot className="w-4 h-4 text-amber-400" />
+                <div className="w-8 h-8 bg-black-800 rounded-full flex items-center justify-center flex-shrink-0">
+                  <Bot className="w-4 h-4 text-cookie-400" />
                 </div>
                 <div className="flex-1">
-                  <p className="text-sm font-medium mb-2 text-gray-300">AI Assistant</p>
+                  <p className="text-sm font-medium mb-2 text-cookie-300">AI Assistant</p>
                   <div className="typing-indicator">
-                    <div className="typing-dot bg-amber-400"></div>
-                    <div className="typing-dot bg-amber-400" style={{ animationDelay: '0.2s' }}></div>
-                    <div className="typing-dot bg-amber-400" style={{ animationDelay: '0.4s' }}></div>
+                    <div className="typing-dot bg-cookie-400"></div>
+                    <div className="typing-dot bg-cookie-400" style={{ animationDelay: '0.2s' }}></div>
+                    <div className="typing-dot bg-cookie-400" style={{ animationDelay: '0.4s' }}></div>
                   </div>
                 </div>
               </div>
@@ -782,14 +782,14 @@ export default function Home() {
 
       {/* Study Mode Panel */}
       {showFlashcards && flashcards.length > 0 && isStudyPanelOpen && (
-        <div className="fixed right-0 top-0 h-full w-96 bg-gray-800 border-l border-gray-600 shadow-xl z-30">
+        <div className="fixed right-0 top-0 h-full w-96 bg-black-900 border-l border-black-700 shadow-xl z-30">
           <div className="h-full flex flex-col">
             {/* Header */}
-            <div className="flex items-center justify-between p-4 border-b border-gray-600">
+            <div className="flex items-center justify-between p-4 border-b border-black-700">
               <h3 className="text-lg font-semibold text-white">Study Mode</h3>
               <button
                 onClick={() => setIsStudyPanelOpen(false)}
-                className="text-gray-400 hover:text-gray-200 transition-colors p-2 rounded-lg hover:bg-gray-700"
+                className="text-cookie-400 hover:text-cookie-200 transition-colors p-2 rounded-lg hover:bg-black-800"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -797,25 +797,25 @@ export default function Home() {
             
             {/* Topic Info */}
             {activeTopic && (
-              <div className="px-4 py-2 border-b border-gray-600 bg-amber-900/20">
-                <div className="text-sm text-amber-200">
+              <div className="px-4 py-2 border-b border-black-700 bg-cookie-900/20">
+                <div className="text-sm text-cookie-200">
                   <span className="font-medium">Topic:</span> {activeTopic}
                 </div>
-                <div className="text-xs text-amber-300">
+                <div className="text-xs text-cookie-300">
                   {getCurrentSessionCards().length} cards in session
                 </div>
               </div>
             )}
 
             {/* Progress Bar */}
-            <div className="px-4 py-2 border-b border-gray-600">
-              <div className="flex items-center justify-between text-sm text-gray-300 mb-2">
+            <div className="px-4 py-2 border-b border-black-700">
+              <div className="flex items-center justify-between text-sm text-cookie-300 mb-2">
                 <span>Progress</span>
                 <span>{gradedCount} / {getCurrentSessionCards().length}</span>
               </div>
-              <div className="w-full bg-gray-700 rounded-full h-2">
+              <div className="w-full bg-black-800 rounded-full h-2">
                 <div 
-                  className="bg-amber-600 h-2 rounded-full transition-all duration-300"
+                  className="bg-cookie-600 h-2 rounded-full transition-all duration-300"
                   style={{ width: `${getCurrentSessionCards().length > 0 ? (gradedCount / getCurrentSessionCards().length) * 100 : 0}%` }}
                 ></div>
               </div>
@@ -827,7 +827,7 @@ export default function Home() {
                 <div className="text-center">
                   <div className="text-2xl mb-4">🎉</div>
                   <div className="text-lg font-semibold text-white mb-2">Session Complete!</div>
-                  <div className="text-sm text-gray-300 mb-6">
+                  <div className="text-sm text-cookie-300 mb-6">
                     You've reviewed all {getCurrentSessionCards().length} cards
                   </div>
                   <div className="space-y-2">
@@ -837,13 +837,13 @@ export default function Home() {
                         setGradedCount(0)
                         setShowDone(false)
                       }}
-                      className="w-full rounded-xl px-4 py-2 font-medium shadow-sm bg-amber-600 text-black hover:bg-amber-500 transition-colors"
+                      className="w-full rounded-xl px-4 py-2 font-medium shadow-sm bg-cookie-600 text-black hover:bg-cookie-500 transition-colors"
                     >
                       Review Again
                     </button>
                     <button
                       onClick={() => setIsStudyPanelOpen(false)}
-                      className="w-full rounded-xl px-4 py-2 font-medium shadow-sm bg-gray-600 text-gray-200 hover:bg-gray-500 transition-colors"
+                      className="w-full rounded-xl px-4 py-2 font-medium shadow-sm bg-black-700 text-cookie-200 hover:bg-black-600 transition-colors"
                     >
                       Close
                     </button>
@@ -852,7 +852,7 @@ export default function Home() {
               ) : getCurrentSessionCards().length > 0 ? (
                 <div className="w-full max-w-sm">
                   <div 
-                    className="study-card relative w-full h-64 bg-gray-700 border border-gray-600 rounded-2xl shadow-sm cursor-pointer transition-transform duration-300 hover:shadow-md"
+                    className="study-card relative w-full h-64 bg-black-800 border border-black-700 rounded-2xl shadow-sm cursor-pointer transition-transform duration-300 hover:shadow-md"
                     onClick={() => {
                       const card = document.querySelector('.study-card')
                       if (card) {
@@ -861,14 +861,14 @@ export default function Home() {
                     }}
                   >
                     <div className="absolute inset-0 p-6 flex flex-col items-center justify-center text-center backface-hidden">
-                      <div className="text-amber-400 font-bold mb-3 text-sm">Q:</div>
-                      <div className="text-gray-200 text-sm leading-relaxed">
+                      <div className="text-cookie-400 font-bold mb-3 text-sm">Q:</div>
+                      <div className="text-white text-sm leading-relaxed">
                         {getCurrentSessionCards()[getCurrentCardIndex()]?.question}
                       </div>
                     </div>
-                    <div className="absolute inset-0 p-6 flex flex-col items-center justify-center text-center bg-gray-600 rounded-2xl rotate-y-180 backface-hidden">
+                    <div className="absolute inset-0 p-6 flex flex-col items-center justify-center text-center bg-black-700 rounded-2xl rotate-y-180 backface-hidden">
                       <div className="text-green-400 font-bold mb-3 text-sm">A:</div>
-                      <div className="text-gray-200 text-sm leading-relaxed">
+                      <div className="text-white text-sm leading-relaxed">
                         {getCurrentSessionCards()[getCurrentCardIndex()]?.answer}
                       </div>
                     </div>
@@ -876,7 +876,7 @@ export default function Home() {
                   
                   {/* Grading Buttons */}
                   <div className="mt-6 space-y-3">
-                    <div className="text-sm text-gray-300 text-center mb-3">
+                    <div className="text-sm text-cookie-300 text-center mb-3">
                       How well did you know this?
                     </div>
                     <div className="flex space-x-2">
@@ -905,20 +905,20 @@ export default function Home() {
                         <span className="text-sm font-medium">Didn't know (3)</span>
                       </button>
                     </div>
-                    <div className="text-xs text-gray-400 text-center mt-2">
+                    <div className="text-xs text-cookie-400 text-center mt-2">
                       Use keyboard shortcuts: 1, 2, or 3
                     </div>
                   </div>
                 </div>
               ) : (
                 <div className="text-center">
-                  <div className="text-gray-400 mb-4">
+                  <div className="text-cookie-400 mb-4">
                     {activeTopic ? 'No cards for this topic' : 'No flashcards available'}
                   </div>
                   {activeTopic && (
                     <button
                       onClick={() => setActiveTopic(null)}
-                      className="rounded-xl px-4 py-2 font-medium shadow-sm bg-amber-600 text-black hover:bg-amber-500 transition-colors"
+                      className="rounded-xl px-4 py-2 font-medium shadow-sm bg-cookie-600 text-black hover:bg-cookie-500 transition-colors"
                     >
                       Clear Topic
                     </button>
@@ -931,16 +931,16 @@ export default function Home() {
       )}
 
       {/* Input Form */}
-      <div className="sticky bottom-0 bg-gray-900/90 backdrop-blur border-t border-gray-700 p-4">
+      <div className="sticky bottom-0 bg-black-950/90 backdrop-blur border-t border-black-800 p-4">
         <div className="max-w-4xl mx-auto">
           {/* Topic Pill */}
           {activeTopic && (
             <div className="mb-3 flex items-center justify-center">
-              <div className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs bg-amber-900/30 border border-amber-600/30">
-                <span className="text-amber-200">Focused: {activeTopic}</span>
+              <div className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs bg-cookie-900/30 border border-cookie-600/30">
+                <span className="text-cookie-200">Focused: {activeTopic}</span>
                 <button
                   onClick={() => setActiveTopic(null)}
-                  className="ml-1 text-amber-400 hover:text-amber-200 transition-colors"
+                  className="ml-1 text-cookie-400 hover:text-cookie-200 transition-colors"
                 >
                   ✕
                 </button>
@@ -962,13 +962,13 @@ export default function Home() {
                 }}
                 placeholder="Type your message here... (Enter to send, Shift+Enter for new line)"
                 disabled={isLoading || !apiKey.trim()}
-                className="w-full px-4 py-3 bg-gray-800 border border-gray-600 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed text-white placeholder-gray-400"
+                className="w-full px-4 py-3 bg-black-800 border border-black-700 rounded-xl focus:ring-2 focus:ring-cookie-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed text-white placeholder-cookie-400"
               />
             </div>
             <button
               type="submit"
               disabled={isLoading || !inputMessage.trim() || !apiKey.trim()}
-              className="px-6 py-3 bg-amber-600 text-black rounded-xl hover:bg-amber-500 focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center space-x-2"
+              className="px-6 py-3 bg-cookie-600 text-black rounded-xl hover:bg-cookie-500 focus:ring-2 focus:ring-cookie-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center space-x-2"
             >
               {isLoading ? (
                 <Loader2 className="w-5 h-5 animate-spin" />
@@ -980,7 +980,7 @@ export default function Home() {
           </form>
           
           {!apiKey.trim() && (
-            <p className="text-sm text-gray-500 mt-2 text-center">
+            <p className="text-sm text-cookie-500 mt-2 text-center">
               Please set your OpenAI API key in the settings to start chatting
             </p>
           )}
@@ -1003,7 +1003,7 @@ export default function Home() {
               e.stopPropagation()
               handleAddFlashcard(selectedText)
             }}
-            className="flex items-center space-x-2 px-3 py-2 bg-amber-600 text-black rounded-lg shadow-lg hover:bg-amber-500 transition-colors"
+            className="flex items-center space-x-2 px-3 py-2 bg-cookie-600 text-black rounded-lg shadow-lg hover:bg-cookie-500 transition-colors"
           >
             <Plus className="w-4 h-4" />
             <span className="text-sm font-medium">Add Flashcard</span>
@@ -1013,14 +1013,14 @@ export default function Home() {
 
       {/* Flashcard Modal */}
       {showModal && selectedFlashcard && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-gray-900 border border-gray-700 rounded-lg shadow-xl max-w-2xl w-full max-h-[80vh] overflow-hidden">
+        <div className="fixed inset-0 bg-black-950 bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-black-900 border border-black-700 rounded-lg shadow-xl max-w-2xl w-full max-h-[80vh] overflow-hidden">
             {/* Modal Header */}
-            <div className="flex items-center justify-between p-4 border-b border-gray-700">
-              <h3 className="text-lg font-semibold text-gray-100">Flashcard Details</h3>
+            <div className="flex items-center justify-between p-4 border-b border-black-700">
+              <h3 className="text-lg font-semibold text-white">Flashcard Details</h3>
               <button
                 onClick={closeModal}
-                className="text-gray-400 hover:text-gray-200 transition-colors p-2 rounded-lg hover:bg-gray-800"
+                className="text-cookie-400 hover:text-cookie-200 transition-colors p-2 rounded-lg hover:bg-black-800"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -1031,7 +1031,7 @@ export default function Home() {
               {/* Question */}
               <div className="mb-6">
                 <div className="text-green-400 font-bold mb-3 text-sm">Question:</div>
-                <div className="bg-gray-800 border border-gray-600 rounded-lg p-4 font-mono text-gray-100 text-sm leading-relaxed">
+                <div className="bg-black-800 border border-black-700 rounded-lg p-4 font-mono text-white text-sm leading-relaxed">
                   {selectedFlashcard.question}
                 </div>
               </div>
@@ -1039,17 +1039,17 @@ export default function Home() {
               {/* Answer */}
               <div>
                 <div className="text-blue-400 font-bold mb-3 text-sm">Answer:</div>
-                <div className="bg-gray-800 border border-gray-600 rounded-lg p-4 font-mono text-gray-100 text-sm leading-relaxed whitespace-pre-wrap">
+                <div className="bg-black-800 border border-black-700 rounded-lg p-4 font-mono text-white text-sm leading-relaxed whitespace-pre-wrap">
                   {selectedFlashcard.answer}
                 </div>
               </div>
             </div>
             
             {/* Modal Footer */}
-            <div className="flex justify-end p-4 border-t border-gray-700">
+            <div className="flex justify-end p-4 border-t border-black-700">
               <button
                 onClick={closeModal}
-                className="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-gray-100 rounded-lg transition-colors"
+                className="px-4 py-2 bg-black-700 hover:bg-black-600 text-white rounded-lg transition-colors"
               >
                 Close
               </button>

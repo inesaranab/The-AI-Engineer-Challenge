@@ -8,13 +8,13 @@
   }
   
   body {
-    @apply bg-gradient-to-br from-dark-50 to-dark-100 min-h-screen;
+    @apply bg-black-950 text-white min-h-screen;
   }
 }
 
 @layer components {
   .glass-effect {
-    @apply bg-white/80 backdrop-blur-sm border border-white/20;
+    @apply bg-black-900/80 backdrop-blur-sm border border-black-800/20;
   }
   
   /* 3D Flip Card Styles */
@@ -75,7 +75,7 @@
   }
   
   .gradient-text {
-    @apply bg-gradient-to-r from-primary-600 to-primary-800 bg-clip-text text-transparent;
+    @apply bg-gradient-to-r from-cookie-500 to-cookie-700 bg-clip-text text-transparent;
   }
   
   .chat-bubble {
@@ -83,11 +83,11 @@
   }
   
   .user-bubble {
-    @apply bg-primary-500 text-white ml-auto;
+    @apply bg-cookie-600 text-black-950 ml-auto;
   }
   
   .ai-bubble {
-    @apply bg-white text-dark-800 mr-auto;
+    @apply bg-black-900 text-white mr-auto border border-black-800;
   }
   
   .typing-indicator {
@@ -95,7 +95,7 @@
   }
   
   .typing-dot {
-    @apply w-2 h-2 bg-primary-400 rounded-full animate-pulse;
+    @apply w-2 h-2 bg-cookie-400 rounded-full animate-pulse;
   }
   
   /* Study card flip animation */
