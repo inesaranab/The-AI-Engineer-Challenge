@@ -154,6 +154,12 @@ async def chat(request: ChatRequest, authorization: str = Header(None)):
 
 IMPORTANT: You must ONLY answer questions using information from the provided context below. If the answer is not in the context, say "I don't have enough information in the provided document to answer that question."
 
+When the user asks to focus quizzes on a section/topic, begin your reply with a single control line:
+CONTROL: {{"action":"set_topic","topic":"<short topic label>"}}
+After that line, provide your normal, helpful answer.
+
+If there is no topic change, do not output a CONTROL line.
+
 Context from uploaded document:
 {context}"""
                 

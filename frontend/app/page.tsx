@@ -129,6 +129,8 @@ export default function Home() {
   const [showAddFlashcard, setShowAddFlashcard] = useState(false)
   const [addFlashcardPosition, setAddFlashcardPosition] = useState({ x: 0, y: 0 })
   const [studyProgress, setStudyProgress] = useState(0)
+  const [activeTopic, setActiveTopic] = useState<string | null>(null)
+  const [isStudyPanelOpen, setIsStudyPanelOpen] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const textSelectionRef = useRef<HTMLDivElement>(null)
@@ -151,6 +153,17 @@ export default function Home() {
       return () => document.removeEventListener('click', handleClickOutside)
     }
   }, [showAddFlashcard])
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && isStudyPanelOpen) {
+        setIsStudyPanelOpen(false)
+      }
+    }
+    
+    document.addEventListener('keydown', handleKeyDown)
+    return () => document.removeEventListener('keydown', handleKeyDown)
+  }, [isStudyPanelOpen])
 
   const handleFileUpload = async (file: File) => {
     if (!file.name.endsWith('.pdf')) {
@@ -240,6 +253,7 @@ export default function Home() {
       const result = await response.json()
       setFlashcards(result.flashcards)
       setShowFlashcards(true)
+      setIsStudyPanelOpen(true)
     } catch (error) {
       console.error('Flashcard generation error:', error)
       alert(`Error generating flashcards: ${error instanceof Error ? error.message : 'Unknown error'}`)
@@ -286,11 +300,14 @@ export default function Home() {
   }
 
   const handleCardGrading = (grade: 1 | 2 | 3) => {
+    const sessionCards = getStudySessionCards()
     setStudyProgress(prev => prev + 1)
-    if (currentCardIndex < flashcards.length - 1) {
+    if (currentCardIndex < sessionCards.length - 1) {
       setCurrentCardIndex(prev => prev + 1)
     } else {
+      // Session completed - show completion state
       setCurrentCardIndex(0)
+      setStudyProgress(0)
     }
   }
 
@@ -300,9 +317,50 @@ export default function Home() {
     if (e.key === '3') handleCardGrading(3)
   }
 
+  // Helper function to check if a card matches the active topic
+  const matchesTopic = (card: Flashcard, topic: string) => {
+    const bag = [
+      card.question.toLowerCase(),
+      card.answer.toLowerCase()
+    ]
+    return bag.some(text => text.includes(topic.toLowerCase()))
+  }
+
+  // Get filtered flashcards based on active topic
+  const getFilteredFlashcards = () => {
+    if (!activeTopic) return flashcards
+    return flashcards.filter(card => matchesTopic(card, activeTopic))
+  }
+
+  // Get study session cards (capped at 9)
+  const getStudySessionCards = () => {
+    const filtered = getFilteredFlashcards()
+    return filtered.slice(0, 9)
+  }
+
+  // Handle slash commands
+  const handleSlashCommand = (input: string) => {
+    if (input.startsWith('/topic ')) {
+      const topic = input.replace('/topic ', '').trim()
+      setActiveTopic(topic)
+      return true
+    }
+    if (input === '/clear-topic') {
+      setActiveTopic(null)
+      return true
+    }
+    return false
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!inputMessage.trim() || !apiKey.trim()) return
+
+    // Handle slash commands
+    if (handleSlashCommand(inputMessage)) {
+      setInputMessage('')
+      return
+    }
 
     const userMessage: Message = {
       id: Date.now().toString(),
@@ -338,6 +396,7 @@ export default function Home() {
       if (!reader) throw new Error('No reader available')
 
       let aiResponse = ''
+      let controlParsed = false
       const aiMessage: Message = {
         id: (Date.now() + 1).toString(),
         content: '',
@@ -353,6 +412,25 @@ export default function Home() {
 
         const chunk = new TextDecoder().decode(value)
         aiResponse += chunk
+
+        // Parse CONTROL line if not already parsed
+        if (!controlParsed && aiResponse.includes('\n')) {
+          const lines = aiResponse.split('\n')
+          if (lines[0].startsWith('CONTROL:')) {
+            try {
+              const controlText = lines[0].replace('CONTROL:', '').trim()
+              const control = JSON.parse(controlText)
+              if (control?.action === 'set_topic' && control?.topic) {
+                setActiveTopic(control.topic)
+                // Remove control line from visible content
+                aiResponse = lines.slice(1).join('\n')
+              }
+            } catch (e) {
+              // Ignore parsing errors
+            }
+            controlParsed = true
+          }
+        }
 
         setMessages(prev => 
           prev.map(msg => 
@@ -653,37 +731,74 @@ export default function Home() {
       </div>
 
       {/* Study Mode Panel */}
-      {showFlashcards && flashcards.length > 0 && (
+      {showFlashcards && flashcards.length > 0 && isStudyPanelOpen && (
         <div className="fixed right-0 top-0 h-full w-96 bg-white border-l border-gray-200 shadow-xl z-30">
           <div className="h-full flex flex-col">
             {/* Header */}
             <div className="flex items-center justify-between p-4 border-b border-gray-200">
               <h3 className="text-lg font-semibold text-gray-900">Study Mode</h3>
               <button
-                onClick={() => setShowFlashcards(false)}
+                onClick={() => setIsStudyPanelOpen(false)}
                 className="text-gray-400 hover:text-gray-600 transition-colors p-2 rounded-lg hover:bg-gray-100"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
             
+            {/* Topic Info */}
+            {activeTopic && (
+              <div className="px-4 py-2 border-b border-gray-200 bg-blue-50">
+                <div className="text-sm text-blue-800">
+                  <span className="font-medium">Topic:</span> {activeTopic}
+                </div>
+                <div className="text-xs text-blue-600">
+                  {getFilteredFlashcards().length} found · capped at 9
+                </div>
+              </div>
+            )}
+
             {/* Progress Bar */}
             <div className="px-4 py-2 border-b border-gray-200">
               <div className="flex items-center justify-between text-sm text-gray-600 mb-2">
                 <span>Progress</span>
-                <span>{studyProgress} / {flashcards.length}</span>
+                <span>{studyProgress} / {getStudySessionCards().length}</span>
               </div>
               <div className="w-full bg-gray-200 rounded-full h-2">
                 <div 
                   className="bg-blue-600 h-2 rounded-full transition-all duration-300"
-                  style={{ width: `${(studyProgress / flashcards.length) * 100}%` }}
+                  style={{ width: `${(studyProgress / getStudySessionCards().length) * 100}%` }}
                 ></div>
               </div>
             </div>
             
             {/* Study Card */}
             <div className="flex-1 p-4 flex flex-col items-center justify-center">
-              {flashcards.length > 0 && (
+              {studyProgress >= getStudySessionCards().length && getStudySessionCards().length > 0 ? (
+                <div className="text-center">
+                  <div className="text-2xl mb-4">🎉</div>
+                  <div className="text-lg font-semibold text-gray-900 mb-2">Session Complete!</div>
+                  <div className="text-sm text-gray-600 mb-6">
+                    You've reviewed all {getStudySessionCards().length} cards
+                  </div>
+                  <div className="space-y-2">
+                    <button
+                      onClick={() => {
+                        setCurrentCardIndex(0)
+                        setStudyProgress(0)
+                      }}
+                      className="w-full rounded-xl px-4 py-2 font-medium shadow-sm bg-blue-600 text-white hover:bg-blue-700 transition-colors"
+                    >
+                      Review Again
+                    </button>
+                    <button
+                      onClick={() => setIsStudyPanelOpen(false)}
+                      className="w-full rounded-xl px-4 py-2 font-medium shadow-sm bg-gray-200 text-gray-700 hover:bg-gray-300 transition-colors"
+                    >
+                      Close
+                    </button>
+                  </div>
+                </div>
+              ) : getStudySessionCards().length > 0 ? (
                 <div className="w-full max-w-sm">
                   <div 
                     className="study-card relative w-full h-64 bg-white border border-gray-200 rounded-2xl shadow-sm cursor-pointer transition-transform duration-300 hover:shadow-md"
@@ -697,13 +812,13 @@ export default function Home() {
                     <div className="absolute inset-0 p-6 flex flex-col items-center justify-center text-center backface-hidden">
                       <div className="text-blue-600 font-bold mb-3 text-sm">Q:</div>
                       <div className="text-gray-800 text-sm leading-relaxed">
-                        {flashcards[currentCardIndex]?.question}
+                        {getStudySessionCards()[currentCardIndex]?.question}
                       </div>
                     </div>
                     <div className="absolute inset-0 p-6 flex flex-col items-center justify-center text-center bg-gray-50 rounded-2xl rotate-y-180 backface-hidden">
                       <div className="text-green-600 font-bold mb-3 text-sm">A:</div>
                       <div className="text-gray-800 text-sm leading-relaxed">
-                        {flashcards[currentCardIndex]?.answer}
+                        {getStudySessionCards()[currentCardIndex]?.answer}
                       </div>
                     </div>
                   </div>
@@ -717,7 +832,8 @@ export default function Home() {
                       <button
                         onClick={() => handleCardGrading(1)}
                         onKeyDown={handleKeyPress}
-                        className="flex-1 flex items-center justify-center space-x-2 px-3 py-2 bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition-colors"
+                        disabled={currentCardIndex >= getStudySessionCards().length - 1}
+                        className="flex-1 flex items-center justify-center space-x-2 px-3 py-2 bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition-colors disabled:opacity-50"
                       >
                         <CheckCircle className="w-4 h-4" />
                         <span className="text-sm font-medium">Knew (1)</span>
@@ -725,7 +841,8 @@ export default function Home() {
                       <button
                         onClick={() => handleCardGrading(2)}
                         onKeyDown={handleKeyPress}
-                        className="flex-1 flex items-center justify-center space-x-2 px-3 py-2 bg-yellow-100 text-yellow-700 rounded-lg hover:bg-yellow-200 transition-colors"
+                        disabled={currentCardIndex >= getStudySessionCards().length - 1}
+                        className="flex-1 flex items-center justify-center space-x-2 px-3 py-2 bg-yellow-100 text-yellow-700 rounded-lg hover:bg-yellow-200 transition-colors disabled:opacity-50"
                       >
                         <HelpCircle className="w-4 h-4" />
                         <span className="text-sm font-medium">Unsure (2)</span>
@@ -733,7 +850,8 @@ export default function Home() {
                       <button
                         onClick={() => handleCardGrading(3)}
                         onKeyDown={handleKeyPress}
-                        className="flex-1 flex items-center justify-center space-x-2 px-3 py-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-colors"
+                        disabled={currentCardIndex >= getStudySessionCards().length - 1}
+                        className="flex-1 flex items-center justify-center space-x-2 px-3 py-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-colors disabled:opacity-50"
                       >
                         <XCircle className="w-4 h-4" />
                         <span className="text-sm font-medium">Didn't know (3)</span>
@@ -744,6 +862,20 @@ export default function Home() {
                     </div>
                   </div>
                 </div>
+              ) : (
+                <div className="text-center">
+                  <div className="text-gray-500 mb-4">
+                    {activeTopic ? 'No cards for this topic' : 'No flashcards available'}
+                  </div>
+                  {activeTopic && (
+                    <button
+                      onClick={() => setActiveTopic(null)}
+                      className="rounded-xl px-4 py-2 font-medium shadow-sm bg-blue-600 text-white hover:bg-blue-700 transition-colors"
+                    >
+                      Clear Topic
+                    </button>
+                  )}
+                </div>
               )}
             </div>
           </div>
@@ -753,6 +885,21 @@ export default function Home() {
       {/* Input Form */}
       <div className="sticky bottom-0 bg-white/70 backdrop-blur border-t border-gray-200 p-4">
         <div className="max-w-4xl mx-auto">
+          {/* Topic Pill */}
+          {activeTopic && (
+            <div className="mb-3 flex items-center justify-center">
+              <div className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs bg-slate-100">
+                <span className="text-slate-700">Focused: {activeTopic}</span>
+                <button
+                  onClick={() => setActiveTopic(null)}
+                  className="ml-1 text-slate-500 hover:text-slate-700 transition-colors"
+                >
+                  ✕
+                </button>
+              </div>
+            </div>
+          )}
+          
           <form onSubmit={handleSubmit} className="flex space-x-4">
             <div className="flex-1">
               <input
