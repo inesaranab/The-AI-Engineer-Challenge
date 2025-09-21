@@ -97,6 +97,24 @@
   .typing-dot {
     @apply w-2 h-2 bg-primary-400 rounded-full animate-pulse;
   }
+  
+  /* Study card flip animation */
+  .study-card {
+    transform-style: preserve-3d;
+    transition: transform 0.6s;
+  }
+  
+  .study-card.flipped {
+    transform: rotateY(180deg);
+  }
+  
+  .backface-hidden {
+    backface-visibility: hidden;
+  }
+  
+  .rotate-y-180 {
+    transform: rotateY(180deg);
+  }
 }
 
 @layer utilities {
