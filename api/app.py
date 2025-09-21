@@ -10,6 +10,12 @@ import os
 import PyPDF2
 import io
 from typing import Optional, List
+import numpy as np
+# Import aimakerspace modules for semantic search
+import sys
+import os
+sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
+from aimakerspace.openai_utils.embedding import EmbeddingModel
 
 # Initialize FastAPI application with a title
 app = FastAPI(title="OpenAI Chat API")
@@ -73,8 +79,43 @@ def build_rag_system(text: str) -> list:
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error building RAG system: {str(e)}")
 
-def find_relevant_chunks(query: str, chunks: list, k: int = 3) -> list:
-    """Simple keyword-based search for relevant chunks"""
+def cosine_similarity(vector_a: np.ndarray, vector_b: np.ndarray) -> float:
+    """Return the cosine similarity between two vectors."""
+    norm_a = np.linalg.norm(vector_a)
+    norm_b = np.linalg.norm(vector_b)
+    if norm_a == 0 or norm_b == 0:
+        return 0.0
+    
+    dot_product = np.dot(vector_a, vector_b)
+    return float(dot_product / (norm_a * norm_b))
+
+def find_relevant_chunks_semantic(query: str, chunks: list, k: int = 3) -> list:
+    """Semantic search for relevant chunks using embeddings"""
+    try:
+        # Initialize embedding model
+        embedding_model = EmbeddingModel()
+        
+        # Get query embedding
+        query_embedding = np.array(embedding_model.get_embedding(query))
+        
+        # Calculate similarity for each chunk
+        chunk_similarities = []
+        for chunk in chunks:
+            chunk_embedding = np.array(embedding_model.get_embedding(chunk))
+            similarity = cosine_similarity(query_embedding, chunk_embedding)
+            chunk_similarities.append((chunk, similarity))
+        
+        # Sort by similarity and return top k
+        chunk_similarities.sort(key=lambda x: x[1], reverse=True)
+        return [chunk for chunk, _ in chunk_similarities[:k]]
+        
+    except Exception as e:
+        # Fallback to keyword search if embedding fails
+        print(f"Semantic search failed, falling back to keyword search: {e}")
+        return find_relevant_chunks_keyword(query, chunks, k)
+
+def find_relevant_chunks_keyword(query: str, chunks: list, k: int = 3) -> list:
+    """Fallback keyword-based search for relevant chunks"""
     query_words = query.lower().split()
     chunk_scores = []
     
@@ -145,8 +186,8 @@ async def chat(request: ChatRequest, authorization: str = Header(None)):
         async def generate():
             # If we have PDF chunks (PDF uploaded), use RAG
             if pdf_chunks:
-                # Search for relevant context using simple keyword matching
-                relevant_chunks = find_relevant_chunks(request.user_message, pdf_chunks, k=3)
+                # Search for relevant context using semantic search
+                relevant_chunks = find_relevant_chunks_semantic(request.user_message, pdf_chunks, k=3)
                 context = "\n\n".join(relevant_chunks)
                 
                 # Create enhanced system message with context
