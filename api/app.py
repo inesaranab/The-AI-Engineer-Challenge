@@ -11,11 +11,20 @@ import PyPDF2
 import io
 from typing import Optional, List
 import numpy as np
-# Import aimakerspace modules for semantic search
-import sys
-import os
-sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
-from aimakerspace.openai_utils.embedding import EmbeddingModel
+# EmbeddingModel for semantic search (Vercel-compatible)
+class EmbeddingModel:
+    """Helper for generating embeddings via the OpenAI API."""
+    
+    def __init__(self, embeddings_model_name: str = "text-embedding-3-small"):
+        self.embeddings_model_name = embeddings_model_name
+        self.client = OpenAI()
+    
+    def get_embedding(self, text: str):
+        """Return an embedding for a single text."""
+        response = self.client.embeddings.create(
+            input=text, model=self.embeddings_model_name
+        )
+        return response.data[0].embedding
 
 # Initialize FastAPI application with a title
 app = FastAPI(title="OpenAI Chat API")
