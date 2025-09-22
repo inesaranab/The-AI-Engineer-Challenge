@@ -41,15 +41,7 @@ app.add_middleware(
     allow_headers=["*"],  # Allows all headers in requests
 )
 
-# Embedding model will be initialized when needed
-embedding_model = None
 
-def get_embedding_model():
-    """Get or create embedding model instance"""
-    global embedding_model
-    if embedding_model is None:
-        embedding_model = EmbeddingModel()
-    return embedding_model
 
 
 # Define the data model for chat requests using Pydantic
@@ -102,7 +94,7 @@ def find_relevant_chunks_semantic(query: str, chunks: list, k: int = 3) -> list:
     """Semantic search for relevant chunks using VectorDatabase"""
     try:
         # Get embedding model instance
-        embedding_model = get_embedding_model()
+        embedding_model = EmbeddingModel()
         
         # Create VectorDatabase instance with existing embedding model
         vector_db = VectorDatabase(embedding_model)
