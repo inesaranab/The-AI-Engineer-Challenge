@@ -11,20 +11,18 @@ import PyPDF2
 import io
 from typing import Optional, List
 import numpy as np
-# EmbeddingModel for semantic search (Vercel-compatible)
-class EmbeddingModel:
-    """Helper for generating embeddings via the OpenAI API."""
-    
-    def __init__(self, embeddings_model_name: str = "text-embedding-3-small"):
-        self.embeddings_model_name = embeddings_model_name
-        self.client = OpenAI()
-    
-    def get_embedding(self, text: str):
-        """Return an embedding for a single text."""
-        response = self.client.embeddings.create(
-            input=text, model=self.embeddings_model_name
-        )
-        return response.data[0].embedding
+import sys
+import asyncio
+
+# Add parent directory to path for aimakerspace imports
+current_dir = os.path.dirname(os.path.abspath(__file__))
+parent_dir = os.path.dirname(current_dir)
+if parent_dir not in sys.path:
+    sys.path.append(parent_dir)
+
+# Import aimakerspace modules
+from aimakerspace.vectordatabase import VectorDatabase
+from aimakerspace.openai_utils.embedding import EmbeddingModel
 
 # Initialize FastAPI application with a title
 app = FastAPI(title="OpenAI Chat API")
@@ -42,6 +40,17 @@ app.add_middleware(
     allow_methods=["*"],  # Allows all HTTP methods (GET, POST, etc.)
     allow_headers=["*"],  # Allows all headers in requests
 )
+
+# Embedding model will be initialized when needed
+embedding_model = None
+
+def get_embedding_model():
+    """Get or create embedding model instance"""
+    global embedding_model
+    if embedding_model is None:
+        embedding_model = EmbeddingModel()
+    return embedding_model
+
 
 # Define the data model for chat requests using Pydantic
 # This ensures incoming request data is properly validated
@@ -62,6 +71,7 @@ class FlashcardResponse(BaseModel):
     flashcards: List[Flashcard]
     success: bool
 
+# Utility functions
 def extract_text_from_pdf(pdf_file: bytes) -> str:
     """Extract text from PDF file bytes"""
     try:
@@ -88,35 +98,22 @@ def build_rag_system(text: str) -> list:
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error building RAG system: {str(e)}")
 
-def cosine_similarity(vector_a: np.ndarray, vector_b: np.ndarray) -> float:
-    """Return the cosine similarity between two vectors."""
-    norm_a = np.linalg.norm(vector_a)
-    norm_b = np.linalg.norm(vector_b)
-    if norm_a == 0 or norm_b == 0:
-        return 0.0
-    
-    dot_product = np.dot(vector_a, vector_b)
-    return float(dot_product / (norm_a * norm_b))
-
 def find_relevant_chunks_semantic(query: str, chunks: list, k: int = 3) -> list:
-    """Semantic search for relevant chunks using embeddings"""
+    """Semantic search for relevant chunks using VectorDatabase"""
     try:
-        # Initialize embedding model
-        embedding_model = EmbeddingModel()
+        # Get embedding model instance
+        embedding_model = get_embedding_model()
         
-        # Get query embedding
-        query_embedding = np.array(embedding_model.get_embedding(query))
+        # Create VectorDatabase instance with existing embedding model
+        vector_db = VectorDatabase(embedding_model)
         
-        # Calculate similarity for each chunk
-        chunk_similarities = []
-        for chunk in chunks:
-            chunk_embedding = np.array(embedding_model.get_embedding(chunk))
-            similarity = cosine_similarity(query_embedding, chunk_embedding)
-            chunk_similarities.append((chunk, similarity))
+        # Build vector database from chunks (stateless for Vercel)
+        vector_db = asyncio.run(vector_db.abuild_from_list(chunks))
         
-        # Sort by similarity and return top k
-        chunk_similarities.sort(key=lambda x: x[1], reverse=True)
-        return [chunk for chunk, _ in chunk_similarities[:k]]
+        # Search for relevant chunks using semantic similarity
+        relevant_chunks = vector_db.search_by_text(query, k=k, return_as_text=True)
+        
+        return relevant_chunks
         
     except Exception as e:
         # Fallback to keyword search if embedding fails
