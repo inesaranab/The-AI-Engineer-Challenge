@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { OpenAI } from 'openai'
 
 function findRelevantChunksKeyword(query: string, chunks: string[], k: number = 3): string[] {
-  const queryWords = query.toLowerCase().split()
+  const queryWords = query.toLowerCase().split(' ')
   const chunkScores: { chunk: string; score: number }[] = []
   
   for (const chunk of chunks) {
