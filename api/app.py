@@ -169,7 +169,10 @@ async def upload_pdf(file: UploadFile = File(...), authorization: str = Header(N
         )
     
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        print(f"PDF upload error: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Error processing PDF: {str(e)}")
 
 # Define the main chat endpoint that handles POST requests
 @app.post("/api/chat")

@@ -100,8 +100,8 @@ const FlashcardComponent: React.FC<{
 // Get API URL from environment or default to localhost
 const getApiUrl = () => {
   if (typeof window !== 'undefined') {
-    // Client-side: use current origin for API calls
-    return `${window.location.origin}/api`
+    // Client-side: use environment variable or default to FastAPI server
+    return process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api'
   }
   // Server-side: use environment variable or default
   return process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api'
