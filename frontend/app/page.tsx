@@ -102,7 +102,7 @@ const getApiUrl = () => {
   if (typeof window !== 'undefined') {
     // Client-side: use environment variable or default to FastAPI server
     if (process.env.NODE_ENV === 'production') {
-      // In production, use the same domain for API calls
+      // In production, use the same domain for API calls (Python serverless function)
       return `${window.location.origin}/api`
     }
     return process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api'
