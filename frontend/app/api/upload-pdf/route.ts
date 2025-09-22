@@ -1,9 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { OpenAI } from 'openai'
-
-// Global variables for RAG system (serverless compatible)
-let pdfChunks: string[] = []
-let pdfText: string = ""
 
 async function extractTextFromPDF(pdfBuffer: Buffer): Promise<string> {
   try {
@@ -58,9 +53,8 @@ export async function POST(request: NextRequest) {
     // Build RAG system
     const chunks = buildRAGSystem(extractedText)
     
-    // Store in global variables (serverless compatible)
-    pdfText = extractedText
-    pdfChunks = chunks
+    // For now, just return success without storing data
+    // In production, store in database or external storage
     
     return NextResponse.json({
       message: `PDF uploaded successfully! Extracted ${extractedText.length} characters and created ${chunks.length} chunks.`,

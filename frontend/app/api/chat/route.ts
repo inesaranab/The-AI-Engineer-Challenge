@@ -1,10 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { OpenAI } from 'openai'
 
-// Global variables for RAG system (serverless compatible)
-let pdfChunks: string[] = []
-let pdfText: string = ""
-
 function findRelevantChunksKeyword(query: string, chunks: string[], k: number = 3): string[] {
   const queryWords = query.toLowerCase().split()
   const chunkScores: { chunk: string; score: number }[] = []
@@ -37,18 +33,8 @@ export async function POST(request: NextRequest) {
     
     let systemMessage = developer_message || "You are a helpful AI assistant."
     
-    // If we have PDF chunks, use RAG
-    if (pdfChunks.length > 0) {
-      const relevantChunks = findRelevantChunksKeyword(user_message, pdfChunks, 3)
-      const context = relevantChunks.join('\n\n')
-      
-      systemMessage = `${systemMessage}
-
-IMPORTANT: You must ONLY answer questions using information from the provided context below. If the answer is not in the context, say "I don't have enough information in the provided document to answer that question."
-
-Context:
-${context}`
-    }
+    // For now, use basic chat without RAG
+    // In production, implement proper storage and RAG
     
     // Create streaming response
     const stream = await openai.chat.completions.create({

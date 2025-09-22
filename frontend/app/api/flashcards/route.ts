@@ -1,10 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { OpenAI } from 'openai'
 
-// Global variables for RAG system (serverless compatible)
-let pdfChunks: string[] = []
-let pdfText: string = ""
-
 export async function POST(request: NextRequest) {
   try {
     const authHeader = request.headers.get('authorization')
@@ -13,18 +9,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'API key is required' }, { status: 400 })
     }
     
-    if (!pdfText.trim()) {
-      return NextResponse.json({ error: 'No PDF uploaded. Please upload a PDF first.' }, { status: 400 })
-    }
+    // For now, return sample flashcards
+    // In production, implement proper PDF storage and processing
     
     const apiKey = authHeader.substring(7) // Remove 'Bearer ' prefix
     const openai = new OpenAI({ apiKey })
     
-    // Generate flashcards from PDF content
-    const prompt = `Based on the following document content, generate 5 educational flashcards. Each flashcard should have a clear question and a comprehensive answer.
-
-Document content:
-${pdfText}
+    // Generate sample flashcards
+    const prompt = `Generate 5 educational flashcards about general knowledge. Each flashcard should have a clear question and a comprehensive answer.
 
 Please format your response as a JSON array of objects with "question" and "answer" fields. Example:
 [
