@@ -1,10 +1,7 @@
 import os
 from typing import Any, AsyncIterator, Iterable, List, MutableMapping
 
-from dotenv import load_dotenv
 from openai import AsyncOpenAI, OpenAI
-
-load_dotenv()
 
 ChatMessage = MutableMapping[str, Any]
 
