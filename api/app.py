@@ -6,6 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 # Import OpenAI client for interacting with OpenAI's API
 from openai import OpenAI
+from openai.types.chat import ChatCompletionMessageParam
 import os
 import PyPDF2
 import io
@@ -40,9 +41,6 @@ app.add_middleware(
     allow_methods=["*"],  # Allows all HTTP methods (GET, POST, etc.)
     allow_headers=["*"],  # Allows all headers in requests
 )
-
-
-
 
 # Define the data model for chat requests using Pydantic
 # This ensures incoming request data is properly validated
@@ -139,7 +137,7 @@ async def upload_pdf(file: UploadFile = File(...), authorization: str = Header(N
     if not api_key:
         raise HTTPException(status_code=400, detail="API key is required")
     
-    if not file.filename.endswith('.pdf'):
+    if not file.filename or not file.filename.endswith('.pdf'):
         raise HTTPException(status_code=400, detail="Only PDF files are allowed")
     
     try:
@@ -205,20 +203,20 @@ If there is no topic change, do not output a CONTROL line.
 Context from uploaded document:
 {context}"""
                 
-                messages = [
+                messages: List[ChatCompletionMessageParam] = [
                     {"role": "system", "content": enhanced_system_message},
                     {"role": "user", "content": request.user_message}
                 ]
             else:
                 # No PDF uploaded, use original behavior
-                messages = [
+                messages: List[ChatCompletionMessageParam] = [
                     {"role": "system", "content": request.developer_message},
                     {"role": "user", "content": request.user_message}
                 ]
             
             # Create a streaming chat completion request
             stream = client.chat.completions.create(
-                model=request.model,
+                model=request.model or "gpt-4.1-mini",
                 messages=messages,
                 stream=True  # Enable streaming response
             )
@@ -281,18 +279,21 @@ Return the flashcards in this exact JSON format:
 Only return the JSON array, no other text."""
 
         # Generate flashcards using OpenAI
+        messages: List[ChatCompletionMessageParam] = [
+            {"role": "system", "content": "You are an educational assistant that creates high-quality flashcards from document content. Always respond with valid JSON only."},
+            {"role": "user", "content": flashcard_prompt}
+        ]
+        
         response = client.chat.completions.create(
             model="gpt-4.1-mini",
-            messages=[
-                {"role": "system", "content": "You are an educational assistant that creates high-quality flashcards from document content. Always respond with valid JSON only."},
-                {"role": "user", "content": flashcard_prompt}
-            ],
+            messages=messages,
             temperature=0.7,
             max_tokens=2000
         )
         
         # Parse the response
-        flashcard_text = response.choices[0].message.content.strip()
+        content = response.choices[0].message.content
+        flashcard_text = content.strip() if content else ""
         
         # Clean up the response (remove any markdown formatting)
         if flashcard_text.startswith("```json"):
